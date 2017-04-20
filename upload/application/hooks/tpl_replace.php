@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://gameap.ru/license.html
  * @link		http://gameap.ru
  * @filesource	
@@ -38,6 +38,8 @@ class Tpl_replace
 	var $l_delim;
 	var $r_delim;
 	
+	// -----------------------------------------------------------------
+	
 	public function __construct()
 	{
 		$this->CI =& get_instance();
@@ -47,21 +49,35 @@ class Tpl_replace
 		$this->r_delim = $this->CI->parser->r_delim;
 	}
 	
-	function _get_lang_line($matches)
+	// -----------------------------------------------------------------
+	
+	private function _get_lang_line($matches)
 	{
 		return $this->CI->lang->line($matches[1]);
 	}
 	
-	/* Замена языковых конструкций вида {lang_***} */
+	// -----------------------------------------------------------------
+	
+	/**
+	 *  Замена языковых конструкций вида {lang_***} 
+	 */
 	public function parse_lang()
 	{
 		$output = $this->CI->output->get_output();
 		
-		$output = preg_replace_callback('/' . $this->l_delim . 'lang\_([a-z\_\-]*)' . $this->r_delim . '/', array($this,'_get_lang_line'), $output);
+		$output = preg_replace_callback('/' . $this->l_delim . 'lang\_([a-z0-9\_\-]*)' . $this->r_delim . '/', array($this,'_get_lang_line'), $output);
 		$this->CI->output->set_output($output);
 	}
 	
-	/* URL */
+	// -----------------------------------------------------------------
+	
+	/**
+	 * URL. 
+	 * Меняет {site_url} на http://example.com/ или http://example.com/index.php?
+	 * в зависимости от настроек.
+	 * {base_url} всегда меняется на http://example.com/
+	 * 
+	 */
 	public function parse_url()
 	{
 		$output = $this->CI->output->get_output();
@@ -79,10 +95,52 @@ class Tpl_replace
 		$this->CI->output->set_output($output);
 	}
 	
-	/* Templates */
+	// -----------------------------------------------------------------
+	
+	private function _get_notice($notification)
+	{
+		if (!isset($this->CI->users->auth_id)) {
+			return '';
+		}
+		
+		$key = $notification[1];
+		
+		if (isset($this->CI->users->auth_data['notices'][$key]['text'])) {
+			return $this->CI->users->auth_data['notices'][$key]['text'];
+		}
+		
+		return '';
+	}
+	
+	// -----------------------------------------------------------------
+	
+	/**
+	 * Парсер уведомлений
+	 */
+	public function parse_notices()
+	{
+		if (!isset($this->CI->users->auth_id)) {
+			return;
+		}
+		
+		$output = $this->CI->output->get_output();
+		$output = preg_replace_callback('/' . $this->l_delim . 'notice\_([a-z0-9\_\-]*)' . $this->r_delim . '/', array($this,'_get_notice'), $output);
+		$this->CI->output->set_output($output);
+	}
+	
+	// -----------------------------------------------------------------
+	
+	/**
+	 *  Templates 
+	 */
 	public function parse_template()
 	{
 		$output = $this->CI->output->get_output();
+		
+		$output = str_replace($this->l_delim . 'csrf_hash'. $this->r_delim, $this->CI->security->get_csrf_hash(), $output);
+		$output = str_replace($this->l_delim . 'csrf_token_name'. $this->r_delim, $this->CI->security->get_csrf_token_name(), $output);
+		
+		$output = str_replace($this->l_delim . 'language'. $this->r_delim, $this->CI->config->config['language'], $output);
 		
 		if (isset($this->CI->config->config['template'])) {
 			$output = str_replace($this->l_delim .  'template' . $this->r_delim, $this->CI->config->config['template'], $output);
@@ -99,3 +157,6 @@ class Tpl_replace
 		$this->CI->output->set_output($output);
 	}
 }
+
+/* End of file tpl_replace.php */
+/* Location: ./application/hooks/tpl_replace.php */

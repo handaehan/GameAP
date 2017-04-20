@@ -74,6 +74,7 @@ $lang['type'] = 'Тип';
 $lang['thanks'] = 'Подяка';
 $lang['recovery'] = 'Відновити';
 $lang['view'] = 'Перегляд';
+$lang['version'] = 'Версія';
 $lang['update'] = 'Оновлення';
 $lang['upload'] = 'Завантажити';
 $lang['user'] = 'Користувач';
@@ -138,6 +139,34 @@ $lang['servers_privileges_log_view'] = 'Перегляд файлів логів
 
 /* - 0.8 - */
 
-/ * Menu * /
+/* Menu */
 $lang['menu_servers_logs'] = 'Серверні логи';
 $lang['menu_panel_logs'] = 'Логи GameAP';
+
+/* -- 0.8.2 -- */
+$lang['host']									= 'Хост';
+$lang['page']									= 'Сторінка';
+$lang['values'] 								= 'Значення';
+
+/* -- 0.8.8 -- */
+$lang['go']										= 'Перейти';
+
+/* - 0.9 - */ 
+
+/* Menu */ 
+$lang['menu_files_config'] = 'Конфігурація серверів'; 
+
+$lang['modules'] = 'Модулі'; 
+
+$lang['set'] = 'Заданий'; 
+$lang['no_set'] = 'Не задан'; 
+
+$lang['contents'] = 'Вміст'; 
+$lang['filter'] = 'Фільтр'; 
+$lang['reset'] = 'Скидання'; 
+
+/* - 0.9.3 - */ 
+$lang['administration'] = 'Адміністрування';
+
+/* - 0.9.9 - */ 
+$lang['closed'] = 'Зачинено';

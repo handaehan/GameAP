@@ -74,7 +74,7 @@ switch($page) {
 		$(document).ready(function() {
 			$("select[name=\'language\']").change(function() {
 				language = $("select[name=\'language\']").val();
-				$("a#link").attr("href", "' . site_url('install/page/start/') . '/" + language);
+				$("a#link").attr("href", "' . site_url('install/page/start') . '/" + language);
 			});
 			
 		});
@@ -87,7 +87,7 @@ switch($page) {
 		
 	case 'start':
 		$title = lang('install_title');
-		$content .= '<p>' . lang('install_welcome') . AP_VERSION .' [' . AP_DATE . ']</p>';
+		$content .= '<p>' . lang('install_welcome') . ' ' . AP_VERSION .' [' . AP_DATE . ']</p>';
 		
 		$content .= lang('install_welcome_description');
 		
@@ -205,37 +205,70 @@ switch($page) {
 	case '3':
 		$title = lang('install_title');
 		$content = '<h2>' . lang('install_configuration') . '</h2>';
-		
+
 		$content .= '<form action="' . site_url('install/page/4/' . $language)  . '" method="post" accept-charset="utf-8">';
 		$content .= '<input type="hidden" name="' . $this->security->get_csrf_token_name() .'" value="' . $this->security->get_csrf_hash() . '" />';
 		
 		$content .= '<table class="zebra" width="100%">';
 		
 		$content .= '<p class="hr"><strong>' . lang('install_data_base') . '</strong></p>';
+		
+		$db_driver_options = array();
+		!extension_loaded('mysql') 		OR ($db_driver_options['mysql'] = 'MySQL' & $db_driver_default = 'mysql');
+		!extension_loaded('mysqli')  	OR ($db_driver_options['mysqli'] = 'MySQLi' & $db_driver_default = 'mysqli');
+		!extension_loaded('pdo') 		OR $db_driver_options['pdo'] = 'PDO';
+		!extension_loaded('postgre') 	OR $db_driver_options['postgre'] = 'Postgre';
+		!extension_loaded('cubrid')		OR $db_driver_options['cubrid'] = 'CUBRID';
+		!extension_loaded('mssql') 		OR $db_driver_options['mssql'] = 'Microsoft SQL';
+		!extension_loaded('oci8') 		OR $db_driver_options['oci8'] = 'oci8';
+		!extension_loaded('odbc')  		OR $db_driver_options['odbc'] = 'ODBC';
+		!extension_loaded('sqlite') 	OR $db_driver_options['sqlite'] = 'SQLite';
+		//~ !extension_loaded('sqlite3')	OR $db_driver_options['sqlite3'] = 'SQLite3';
+		!extension_loaded('sqlsrv') 	OR $db_driver_options['sqlsrv'] = 'SQLSRV';
+		
+		// строим список доступных PDO драйверов
+		if($db_driver_options['pdo']){
+			$pdoDrv = PDO::getAvailableDrivers();
+			
+			$pdoDriverNames = array(
+				'mysql' => 'MySQL',
+				'sqlite' => 'SQLite'
+			);
+			
+			foreach(PDO::getAvailableDrivers() as $pdoDriver){
+				if(!isset($pdoDriverNames[$pdoDriver]))
+					continue;
+				
+				$pdoDrivers[$pdoDriver] = $pdoDriverNames[$pdoDriver];
+			}
+		}
+		
 		$content .= '
-						<td>' . lang('install_db_dbdriver') . ':</td>
-						<td><select name="dbdriver">
-								<option value="mysql">MySQL</option>
-								<option value="mysqli">MySQLi</option>
-								<option value="pdo">PDO</option>
-								<option value="postgre">Postgre</option>
-								<option value="cubrid">CUBRID</option>
-								<option value="mssql">Microsoft SQL</option>
-								<option value="oci8">oci8</option>
-								<option value="odbc">ODBC</option>
-								<option value="sqlite">SQLite</option>
-								<option value="sqlsrv">SQLSRV</option>
-							</select>
-						</td>
 					<tr>
+						<td>' . lang('install_db_dbdriver') . ':</td>
+						<td>' . form_dropdown('dbdriver', $db_driver_options, $db_driver_default, 'id="dbdrivers"') . '</td>
+					</tr>';
+		
+		if(isset($db_driver_options['pdo'])){ // выводим этот список
+			$content .= '
+						<tr id="pdodrivers_row" hidden>
+							<td>' . lang('install_db_pdo') . ':</td>
+							<td>' . form_dropdown('pdodriver', $pdoDrivers,array(),'id="pdodrivers"') . '</td>
+						</tr>';
+						
+			$content .= '<script src="{base_url}/gameap/themes/system/js/install.js"></script>';
+		}
+	
+		$content .= '
+					<tr class="noForSqlite">
 						<td>' . lang('install_db_hostname') . ':</td>
 						<td width="40%"><input type="text" name="hostname" value="localhost"/></td>
 					</tr>
-					<tr>
+					<tr class="noForSqlite">
 						<td>' . lang('install_db_username') . ':</td>
 						<td><input value="root" type="text" name="username" /></td>
 					</tr>
-					<tr>
+					<tr class="noForSqlite">
 						<td>' . lang('install_db_password') . ':</td>
 						<td><input type="text" name="password" /></td>
 					</tr>
@@ -281,7 +314,7 @@ switch($page) {
 						<td>' . lang('install_steamcmd_path') . ':</td>
 						<td><input type="text" name="local_steamcmd_path" /></td>
 					</tr>
-					';	
+					';
 							
 		$content .= '</table>';
 		
@@ -307,14 +340,19 @@ switch($page) {
 		break;
 		
 	case '4':
+		// Определяем SQLite драйвер.	
+		$isSqlite = $this->input->post('dbdriver') == 'pdo' && $this->input->post('pdodriver') == 'sqlite';
+
 		$title = lang('install_title');
 		$content = '<h2>' . lang('install_end_stage') . '</h2>';
 		
-		$this->form_validation->set_rules('hostname', lang('install_db_hostname'), 'trim|required|xss_clean');
-		$this->form_validation->set_rules('username', lang('install_db_username'), 'trim|required|xss_clean');
-		$this->form_validation->set_rules('password', lang('install_db_password'), 'trim|xss_clean');
+		// Для SQLite базы некоторые данные можно опустить.
+		$isSqlite OR $this->form_validation->set_rules('hostname', lang('install_db_hostname'), 'trim|required|xss_clean');
+		$isSqlite OR $this->form_validation->set_rules('username', lang('install_db_username'), 'trim|required|xss_clean');
+		$isSqlite OR $this->form_validation->set_rules('password', lang('install_db_password'), 'trim|xss_clean');
 		$this->form_validation->set_rules('database', lang('install_db_database'), 'trim|required|xss_clean');
 		$this->form_validation->set_rules('dbdriver', lang('install_db_dbdriver'), 'trim|required|xss_clean');
+		$this->input->post('dbdriver') != 'pdo' OR $this->form_validation->set_rules('pdodriver', lang('install_pdo_dbdriver'), 'trim|required|xss_clean');
 		$this->form_validation->set_rules('dbprefix', lang('install_db_dbprefix'), 'trim|xss_clean');
 		
 		$this->form_validation->set_rules('base_url', lang('install_site_url'), 'trim|required|xss_clean');
@@ -326,11 +364,11 @@ switch($page) {
 		
 		$this->form_validation->set_rules('admin_login', lang('login'), 'trim|required|max_length[64]|xss_clean');
 		$this->form_validation->set_rules('admin_email', lang('email'), 'trim|required|valid_email|xss_clean');
-		$this->form_validation->set_rules('admin_password', lang('password'), 'trim|md5|required|min_length[6]|max_length[64]|xss_clean');
+		$this->form_validation->set_rules('admin_password', lang('password'), 'trim|required|min_length[6]|max_length[64]|xss_clean');
 		
 		if ($this->form_validation->run() == FALSE)
 		{
-			$this->show_message(validation_errors());
+			$this->_show_message(validation_errors());
 			return FALSE;
 		}
 		
@@ -346,13 +384,30 @@ switch($page) {
 		$db_cfg['database'] = $this->input->post('database');
 		$db_cfg['dbdriver'] = $this->input->post('dbdriver');
 		$db_cfg['dbprefix'] = $this->input->post('dbprefix');
+		$db_cfg['db_debug'] = TRUE;
 		
-		if (!$this->load->database($db_cfg, TRUE)) {
-			$this->show_message(lang('install_db_error'));
-			return FALSE;
+		// Обработка PDO данных
+		if($this->input->post('dbdriver') == 'pdo'){
+			switch($this->input->post('pdodriver')){
+				case 'mysql':
+					$db_cfg['hostname'] = 'mysql:host='.$db_cfg['hostname'].';dbname='.$db_cfg['database'];
+					//$db_cfg['database'] = '';
+				break;
+				case 'sqlite':
+					$db_cfg['hostname'] = 'sqlite:'.APPPATH.'db/'.$db_cfg['database'].'.db3';
+					$db_cfg['username'] = '';
+					$db_cfg['password'] = '';
+					$db_cfg['database'] = '';
+				break;
+			}
 		}
-
-		$file_strings = explode("\n", file_get_contents('install_gameap/database_install.tmp'));
+		
+		if (!$this->load->database($db_cfg)) {
+			$this->_show_message(lang('install_db_error'));
+			return FALSE;
+		} else {
+			$file_strings = explode("\n", file_get_contents('install_gameap/database_install.tmp'));
+		}
 
 		$i = 0;
 		$count_fstr = count($file_strings);
@@ -365,7 +420,8 @@ switch($page) {
 			foreach($db_variables as $variable) {
 				preg_match('/([\s]*)\$db\[\'default\'\]\[\'' . $variable . '\'\]([\s]*)([\']?)(.*)(\'?)(\\\\?)(.*)/si', $file_strings[$i], $matches);
 				
-				$value = $this->input->post($variable);
+				// ???
+				$value = $db_cfg[$variable]; //$this->input->post($variable);
 				
 				$value = str_replace('\\', '\\\\', $value);
 				$value = str_replace('\'', '\\\'', $value);
@@ -383,31 +439,33 @@ switch($page) {
 			$new_file_data .= $file_strings[$i] . "\n";
 			$i++;
 		}
-
+		
+		
 		if(@file_put_contents('application/config/database.php', $new_file_data)) {
 			/*
 			if(!unlink('../application/config/config_install.tmp')) {
 				$content .= '<p>Удалите файл "application/config/config_install.tmp"</p>';
 			}
 			*/
-			
+		
 			$content .= '<p>' . lang('install_database_saved') . '</p>';
 		} else {
 			//~ $content .= '<p>' . lang('install_manual_database') . ':</p>';
 			//~ $content .= '<textarea>' . $new_file_data . '</textarea>';
-			$this->show_message('File application/config/database.php create error');
+			$this->_show_message('File application/config/database.php create error');
 			return FALSE;
 		}
-		
+
 		/* 
 		 * КОСТЫЛЬ 
 		 * 
 		 * ХЗ почему, но при загрузке базы данных с ручной конфигурацией
 		 * он не хочет грузить $CI->db->dbforce();
 		*/
-		$this->load->database();
+		//~ $this->load->database();
 
 		/* Структура базы данных */
+		
 		require_once 'install_gameap/db.php';
 		
 		/* Демо данные */
@@ -433,20 +491,35 @@ switch($page) {
 		
 		$this->db->insert('migrations', array('version' => $m_version));
 		
+		/*-------------------------------*/
+		/* Создание выделенного сервера  */
+		/*-------------------------------*/
+		$this->load->model('servers/dedicated_servers');
+		
+		$ds_data['name'] 				= 'Local server';
+		$ds_data['os'] 					= $this->input->post('local_os');
+		$ds_data['control_protocol'] 	= 'local';
+		$ds_data['location'] 			= 'GameAP';
+		$ds_data['provider'] 			= 'GameAP';
+		
+		$ds_data['ip'] = json_encode(array('127.0.0.1'));
+		
+		$ds_data['steamcmd_path'] = $this->input->post('local_steamcmd_path');
+		$ds_data['ssh_path'] 	= $this->input->post('local_script_path');
+		$ds_data['telnet_path'] = $this->input->post('local_script_path');
+
+		$this->dedicated_servers->add_dedicated_server($ds_data);
+		
 		/*------------*/
 		/* ADMIN ADD  */
 		/*------------*/
 		
-		$user_data['email'] = $this->input->post('admin_email');
-		$user_data['reg_date'] = time();
+		$user_data['email'] 	= $this->input->post('admin_email');
+		$user_data['reg_date'] 	= time();
 			 
-        $user_data['login'] = $this->input->post('admin_login');
-        $user_data['password'] = $this->input->post('admin_password');
-        $user_data['password'] = $this->password->encryption($user_data['password'], array('login' => $user_data['login'],
-                                                                                             'reg_date' => $user_data['reg_date'],
-                                                                                            )
-		);
-			
+        $user_data['login'] 	= $this->input->post('admin_login');
+        $user_data['password'] 	= hash_password($this->input->post('admin_password'));
+
 		$user_data['privileges'] = json_encode(array(
 													'srv_global' 			=> TRUE,
 													'srv_start' 			=> TRUE,
@@ -459,7 +532,7 @@ switch($page) {
 		));
 		
 		$user_data['is_admin'] = 1;
-			
+		
 		$this->users->add_user($user_data);
 
 		/*-------------------*/
@@ -503,7 +576,7 @@ switch($page) {
 			$new_file_data .= $file_strings[$i] . "\n";
 			$i++;
 		}
-
+		
 		if(@file_put_contents('application/config/gameap_config.php', $new_file_data)) {
 			/*
 			if(!unlink('../application/config/config_install.tmp')) {

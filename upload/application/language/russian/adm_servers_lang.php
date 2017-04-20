@@ -56,7 +56,7 @@ $lang['adm_servers_delete_server_failed']			= 'Ошибка удаления с�
 $lang['adm_servers_server_not_found']				= 'Сервер не найден';
 $lang['adm_servers_game_type_select_wrong']			= 'Модификация выбрана неправильно';
 $lang['adm_servers_game_type_not_found']			= 'Модификация не найдена';
-$lang['adm_servers_no_game_types_for_selected_game']= 'Для выбранной игры модификации отсутствуют. <a href="http://admin.hldm.org/adm_servers/add/game_types" target="blank">Добавить</a>';
+$lang['adm_servers_no_game_types_for_selected_game']= 'Для выбранной игры модификации отсутствуют. <a href="{site_url}adm_servers/add/game_types" target="blank">Добавить</a>';
 $lang['adm_servers_add_game_failed']				= 'Ошибка добавления игры';
 $lang['adm_servers_delete_game_failed']				= 'Ошибка удаления игры';
 $lang['adm_servers_add_game_type_failed']			= 'Ошибка добавления модификации';
@@ -65,6 +65,7 @@ $lang['adm_servers_ds_contains_game_servers']		= 'На выделенном се
 $lang['adm_servers_game_contains_game_servers']		= 'Имеются серверы данной игры. Удаление невозможно.';
 $lang['adm_servers_game_type_contains_game_servers'] = 'Имеются серверы данной модификации. Удаление невозможно.';
 $lang['adm_servers_unknown_page']					= 'Неизвестная страница';
+$lang['adm_servers_telnet_data_unavailable']		= 'Telnet данные неверны. Проверьте правильность заполненных данных.';
 $lang['adm_servers_ssh_data_unavailable']			= 'SSH данные неверны. Проверьте правильность заполненных данных.';
 $lang['adm_servers_ftp_data_unavailable']			= 'FTP данные неверны. Проверьте правильность заполненных данных.';
 $lang['adm_servers_error_server_edit']				= 'Ошибка редактирования сервера';
@@ -87,13 +88,13 @@ $lang['adm_servers_steamcmd_path']					= 'Путь к SteamCMD';
 $lang['adm_servers_steamcmd_path_desc']				= 'Путь к утилите SteamCMD, позволяющей устанавливать и обновлять некоторые игровые серверы.';
 $lang['adm_servers_control_protocol']				= 'Протокол управления сервером';
 $lang['adm_servers_default']						= 'По умолчанию';
-$lang['adm_servers_ds_documentation']				= '<a href="http://wiki.hldm.org/index.php/%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%9F%D0%B0%D0%BD%D0%B5%D0%BB%D1%8C:%D0%92%D1%8B%D0%B4%D0%B5%D0%BB%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5_%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D1%8B" target="blank">Документация по настройке выделенных серверов</a>';
-$lang['adm_servers_game_servers_documentation']		= '<a href="http://wiki.hldm.org/index.php/%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%9F%D0%B0%D0%BD%D0%B5%D0%BB%D1%8C:%D0%98%D0%B3%D1%80%D0%BE%D0%B2%D1%8B%D0%B5_%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D1%8B" target="blank">Документация по настройке игровых серверов</a>';
-$lang['adm_servers_games_documentation']			= '<a href="http://wiki.hldm.org/index.php/%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%9F%D0%B0%D0%BD%D0%B5%D0%BB%D1%8C:%D0%98%D0%B3%D1%80%D1%8B" target="blank">Документация по настройке игр</a>';
-$lang['adm_servers_game_types_documentation']		= '<a href="http://wiki.hldm.org/index.php/%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%9F%D0%B0%D0%BD%D0%B5%D0%BB%D1%8C:%D0%A2%D0%B8%D0%BF%D1%8B_%D0%B8%D0%B3%D1%80" target="blank">Документация по настройке типов игр</a>';
+$lang['adm_servers_ds_documentation']				= '<a href="http://wiki.hldm.org/%D0%92%D1%8B%D0%B4%D0%B5%D0%BB%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5_%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D1%8B_GameAP" target="blank">Документация по настройке выделенных серверов</a>';
+$lang['adm_servers_game_servers_documentation']		= '<a href="http://wiki.hldm.org/%D0%98%D0%B3%D1%80%D0%BE%D0%B2%D1%8B%D0%B5_%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D1%8B_GameAP" target="blank">Документация по настройке игровых серверов</a>';
+$lang['adm_servers_games_documentation']			= '<a href="http://wiki.hldm.org/%D0%98%D0%B3%D1%80%D1%8B_GameAP" target="blank">Документация по настройке игр</a>';
+$lang['adm_servers_game_types_documentation']		= '<a href="http://wiki.hldm.org/%D0%A2%D0%B8%D0%BF%D1%8B_%D0%B8%D0%B3%D1%80_GameAP" target="blank">Документация по настройке типов игр</a>';
 $lang['adm_servers_ftp_data']						= 'FTP данные';
 $lang['adm_servers_ftp_host']						= 'Хост FTP(IP:port)';
-$lang['adm_servers_path_to_executable_file']		= 'Путь к корневой директории с программой запуска';
+$lang['adm_servers_path_to_executable_file']		= 'Путь к корневой директории с исполняемыми файлами GameAP (server.sh или server.exe)';
 $lang['adm_servers_ssh_data']						= 'SSH данные';
 $lang['adm_servers_ssh_host']						= 'Хост SSH(IP:port)';
 $lang['adm_servers_not_ssh_php']					= 'Отсутствует модуль SSH2 php, работа с сервером через SSH невозможна.';
@@ -123,7 +124,7 @@ $lang['adm_servers_steamcmd_parameters']			= 'SteamCMD параметры';
 $lang['adm_servers_game_control']					= 'Управление играми';
 $lang['adm_servers_new_game']						= 'Новая игра';
 $lang['adm_servers_new_game_server']				= 'Новый игровой сервер';
-$lang['adm_servers_add_game_server']				= 'Добавить сервер';
+$lang['adm_servers_add_game_server']				= 'Добавить/Установить сервер';
 $lang['adm_servers_install_game_server']			= 'Установка сервера';
 $lang['adm_servers_connect_data']					= 'Данные для подключения (IP:port)';
 $lang['adm_servers_rcon_password']					= 'RCON пароль';
@@ -133,7 +134,7 @@ $lang['adm_servers_server_dir']						= 'Директория сервера';
 $lang['adm_servers_server_dir_desc']				= 'Директория сервера используется для указания каталога, в котором находятся исполняемые файлы игрового сервера (hlds_run, srcds_run, hlds.exe и т.п.). Указывается относительно каталога с исполняемыми файлами админпанели (server.sh или server.exe).';
 $lang['adm_servers_absolute_path_to_server']		= 'Абсолютный путь к будущему серверу';
 $lang['adm_servers_server_enabled']					= 'Сервер активен';
-$lang['adm_servers_start_parameters']				= 'Параметры запуска';
+$lang['adm_servers_start_parameters']				= 'Параметры запуска серверов';
 $lang['adm_servers_dublicate_game_type']			= 'Создать дубликат';
 $lang['adm_servers_edit_start_parameters']			= 'Редактировать параметры запуска';
 $lang['adm_servers_start_parameters_desc']			= 'В параметрах к скрипту можно указать стандартные алиасы:<br /> {id} - ID сервера,<br /> {dir} - корневая директория со скриптом,<br /> {name} - имя screen,<br /> {ip} - IP,<br /> {port} - port,<br /> {game} - код игры,<br />{user} - пользователь, от которого будет запущен сервер.<br /><br /> Пример: "./server.sh start {dir} {name} {ip} {port} "hlds_run -game {game} +ip {ip} +port {port} +map crossfire" {user}<br /><br />Также можно добавить собственные алиасы и задать им значения в настройках сервера.<br /><br />';
@@ -199,3 +200,43 @@ $lang['adm_servers_local_repository_gtdesc']		= 'Путь к архиву с ф�
 $lang['adm_servers_remote_repository']				= 'Архив на удаленном репозитории';
 $lang['adm_servers_remote_repository_gdesc']		= 'Путь к архиву с игрой на удаленной машине. При установке игрового сервера этот архив будет загружен и распакован в директорию. Обязательно указывайте протокол (http://, https://, ftp:// и тп.).';
 $lang['adm_servers_remote_repository_gtdesc']		= 'Путь к архиву с файлами игровой модификацией на удаленной машине. После установки основной части игрового сервера, этот архив также будет загружен и распакован в директорию с установленным игровым сервером. Обязательно указывайте протокол (http://, https://, ftp:// и тп.).';
+
+// 0.8.6
+$lang['adm_servers_ip_description']					= 'Если IP адресов несколько, то укажите их через запятую.';
+
+// 0.8.8
+$lang['adm_servers_go_to_game']						= 'Перейти к игре';
+
+// 0.9
+$lang['adm_servers_sftp_path_not_found']			= 'Исполняемый файл на сервере SSH по указанному пути не найден (server.sh или server.exe).';
+$lang['adm_servers_ftp_path_not_found']				= 'На FTP сервере не найден путь к исполняемым файлам (server.sh или server.exe).';
+$lang['adm_servers_modifications']					= 'Модификации';
+$lang['adm_servers_must_be_one']					= 'Локальный сервер должен быть только один.';
+$lang['adm_servers_empty_ds_list']					= 'Необходимо добавить хотя бы один выделенный сервер. <a href="%s">Добавить</a>';
+
+// 0.9.3
+$lang['adm_servers_delete_files']					= 'Удалить файлы сервера.';
+$lang['adm_servers_send_command']					= 'Команда отправки в консоль сервера';
+
+// 0.9.9
+$lang['adm_servers_generate_rcon_password']			= 'Сгенерировать новый';
+
+// 1.0
+$lang['adm_servers_cpu_limit']						= 'Лимит на CPU';
+$lang['adm_servers_ram_limit']						= 'Лимит на RAM';
+$lang['adm_servers_net_limit']						= 'Лимит на пропусную способность';
+
+$lang['adm_servers_disable_ds']						= 'Отключить выделенный сервер';
+$lang['adm_servers_unknown_engine']					= 'Неизвестный движок игры';
+
+$lang['adm_servers_gdaemon_access']					= 'GameAP Daemon';
+$lang['adm_servers_gdaemon_data']					= 'Данные GameAP Daemon';
+$lang['adm_servers_gdaemon_host']					= 'Хост (IP:порт)';
+$lang['adm_servers_gdaemon_key']					= 'Ключ GDaemon';
+
+// 1.0.1
+$lang['adm_servers_gdaemon_data_unavailable']		= 'GDaemon данные неверны. Проверьте правильность заполненных данных.';
+$lang['adm_servers_rep_file_not_exists']			= 'Файл не найдён в удалённом репозитории';
+
+// 1.1
+$lang['adm_servers_apply_ds_filter']				= 'Применить фильтр с игровыми серверами';

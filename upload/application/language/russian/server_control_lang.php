@@ -54,7 +54,7 @@ $lang['server_control_add_task'] 						= 'Добавить задание';
 $lang['server_control_rcon_command'] 					= 'RCON команда';
 $lang['server_control_password_to_server'] 				= 'Пароль на сервер';
 $lang['server_control_set_password'] 					= 'Установить пароль';
-$lang['server_control_leave_blank_that_unset'] 			= 'Оставте пустым, чтобы снять пароль.';
+$lang['server_control_leave_blank_that_unset'] 			= 'Оставьте пустым, чтобы снять пароль.';
 
 $lang['server_control_add_task'] 						= 'Добавить задание';
 $lang['server_control_edit_task'] 						= 'Редактировать задание';
@@ -65,3 +65,19 @@ $lang['server_control_repeat_period'] 					= 'Период повтора';
 
 // 0.7.2
 $lang['server_control_command_not_set'] 				= 'Команда не задана';
+
+/* -- 0.9 -- */
+$lang['cvarname_hostname']								= 'Имя сервера';
+$lang['cvarname_map']									= 'Текущая карта';
+$lang['cvarname_players']								= 'Игроки';
+
+/* -- 0.9.3 -- */
+$lang['cvarname_joinlink']								= 'Подключиться к серверу';
+
+/* -- 0.9.9 -- */
+$lang['server_control_twelve_hours'] 					= '12 часов';
+$lang['server_control_time_add_unavailable'] 			= 'Период повтора введен некорректно';
+
+$lang['server_control_empty_rcon_command']				= 'Пустая RCON команда';
+$lang['server_control_task_deleted'] 					= 'Задание успешно удалено';
+$lang['server_control_interval_unavailable'] 			= 'Промежуток между заданиями должен быть не менее 10 минут';

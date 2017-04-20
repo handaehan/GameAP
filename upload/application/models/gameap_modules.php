@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://www.gameap.ru/license.html
  * @link		http://www.gameap.ru
  * @filesource
@@ -33,7 +33,7 @@ class Gameap_modules extends CI_Model {
     {
         // Call the Model constructor
         parent::__construct();
-        
+
         /* 
          * Получение списка модулей 
          * 
@@ -48,6 +48,7 @@ class Gameap_modules extends CI_Model {
 			}
 			
 			$this->get_modules_data();
+			//~ $this->get_modules_list();
 		}
     }
     
@@ -74,11 +75,7 @@ class Gameap_modules extends CI_Model {
     */
     function add_module($data)
     {
-		if ($this->db->insert('modules', $data)) {
-			return TRUE;
-		} else {
-			return FALSE;
-		}
+		return (bool)$this->db->insert('modules', $data);
 	}
 	
 	// ----------------------------------------------------------
@@ -88,11 +85,10 @@ class Gameap_modules extends CI_Model {
 	*/
 	function clean_modules()
     {
-		if ($this->db->empty_table('modules')) {
-			return TRUE;
-		} else {
-			return FALSE;
-		}
+		$this->modules_data = array();
+		$this->modules_list = array();
+		$this->menu = array();
+		return (bool)$this->db->empty_table('modules');
 	}
 	
 	// ----------------------------------------------------------
@@ -105,12 +101,12 @@ class Gameap_modules extends CI_Model {
     {
 		$this->db->order_by('name', 'asc'); 
 		
-		if(is_array($where)){
+		if (is_array($where)) {
 			$query = $this->db->get_where('modules', $where, $limit);
-		}else{
+		} else {
 			$query = $this->db->get('modules');
 		}
-
+		
 		if($query->num_rows > 0) {
 			
 			$this->modules_data = $query->result_array();
@@ -145,7 +141,7 @@ class Gameap_modules extends CI_Model {
 		
 		$i = 0;
 		foreach ($this->modules_data as $module) {
-			
+
 			if ($for_menu) {
 				if ($module['show_in_menu']) {
 					$this->modules_list[$i] = str_replace(' ', '_', strtolower($module['short_name']));	
@@ -168,14 +164,14 @@ class Gameap_modules extends CI_Model {
     */
 	function get_menu_modules()
     {
-		if (!empty($this->modules_data)) {
+		if (empty($this->modules_data)) {
 			$this->get_modules_data();
 		}
 		
 		/* Определение прав пользователя */
-		if ($this->users->auth_data['is_admin']) {
+		if (isset($this->users->auth_data) && $this->users->auth_data['is_admin']) {
 			$access_level = 100;
-		} elseif ($this->users->auth_privileges['srv_global']) {
+		} elseif (isset($this->users->auth_data) && $this->users->auth_privileges['srv_global']) {
 			$access_level = 90;
 		} else {
 			$access_level = 1;
@@ -205,7 +201,7 @@ class Gameap_modules extends CI_Model {
 			
 			$i++;
 		}
-		
+
 		return $this->menu;
 		
 	}

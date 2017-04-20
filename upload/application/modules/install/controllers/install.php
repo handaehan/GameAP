@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://www.gameap.ru/license.html
  * @link		http://www.gameap.ru
  * @filesource	
@@ -23,7 +23,7 @@ class Install extends MX_Controller {
 	var $autoload = array(
         'helper'    => array('url', 'form', 'safety'),
         'libraries' => array('form_validation'),
-        'model' => array('users', 'password', 'servers', 'servers/dedicated_servers', 'servers/games', 'servers/game_types'),
+        'model' => array('users', 'servers', 'servers/dedicated_servers', 'servers/games', 'servers/game_types'),
     );
 	
 	public function __construct()
@@ -39,7 +39,7 @@ class Install extends MX_Controller {
     }
     
     // Отображение информационного сообщения
-    private function show_message($message = FALSE, $link = FALSE, $link_text = FALSE)
+    private function _show_message($message = FALSE, $link = FALSE, $link_text = FALSE)
     {
         
         if (!$message) {

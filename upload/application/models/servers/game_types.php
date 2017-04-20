@@ -4,6 +4,8 @@ class Game_types extends CI_Model {
 	
 	var $game_types_list = array();	// Список типов игр
 	
+	private $_fields = array();
+	
 	//-----------------------------------------------------------	
 	/*
      * Добавление новой игровой модификации
@@ -52,7 +54,54 @@ class Game_types extends CI_Model {
 		}
 	}
 	
+	// -----------------------------------------------------------------
+	
+	public function select_fields($fields)
+	{
+		$this->_fields = $fields;
+	}
+	
+	// -----------------------------------------------------------------
+	
+	/**
+	 * Получение списка имён игровых модификаций
+	 * 
+	 * @return array
+	 */
+	public function get_names($variant = 1)
+	{
+		if (empty($this->game_types_list)) {
+			return array();
+		}
+		
+		$names = array();
+		
+		switch ($variant) {
+			default:
+			case 1:
+				foreach ($this->game_types_list as &$game_type) {
+					$names[$game_type['id']] = $game_type['name'];
+				}
+				break;
+			
+			case 2:
+				foreach ($this->game_types_list as &$game_type) {
+					$names[] = array('id' => $game_type['id'], 'name' => $game_type['name']);
+				}
+				break;
+				
+			case 3:
+				foreach ($this->game_types_list as &$game_type) {
+					$names[] = array('game_type_id' => $game_type['id'], 'game_type_name' => $game_type['name']);
+				}
+				break;
+		}
+		
+		return $names;
+	}
+	
 	//-----------------------------------------------------------
+	
 	/**
      * Получение списка игровых модификаций
      * 
@@ -62,7 +111,7 @@ class Game_types extends CI_Model {
      * @return array
      *
     */
-    function get_gametypes_list($where = FALSE, $limit = 10000)
+    function get_gametypes_list($where = FALSE, $limit = 99999)
     {
 		
 		/*
@@ -73,6 +122,9 @@ class Game_types extends CI_Model {
 		 * 
 		*/
 		
+		// Выбор полей
+		!$this->_fields OR $this->db->select($this->_fields);
+		
 		if(is_array($where)) {
 			$query = $this->db->get_where('game_types', $where, $limit);
 		} else {
@@ -80,12 +132,11 @@ class Game_types extends CI_Model {
 		}
 
 		if($query->num_rows > 0) {
-			
 			$this->game_types_list = $query->result_array();
 			return $this->game_types_list;
-			
 		} else {
-			return NULL;
+			$this->game_types_list = array();
+			return array();
 		}
 	}
 	
@@ -96,57 +147,67 @@ class Game_types extends CI_Model {
      * 
      *
     */
-	function tpl_data_game_types($where = FALSE, $limit = FALSE, $script_param = FALSE)
+	function tpl_data_game_types($where = FALSE, $limit = 99999, $script_param = FALSE)
     {
-		$num = -1;
+		$tpl_data = array();
 		
-		if(!$this->game_types_list){
+		if(!$this->game_types_list OR $where){
 			$this->get_gametypes_list($where, $limit);
 		}
 		
-		if($this->game_types_list){
-		
-			foreach ($this->game_types_list as $game_types){
-				$num++;
+		$num = 0;
+		foreach ($this->game_types_list as $game_types) {
+			$tpl_data[$num]['gt_id'] 	= $game_types['id'];
+			//~ $tpl_data[$num]['gt_code'] 	= $game_types['game_code'];
+			$tpl_data[$num]['gt_name'] 	= $game_types['name'];
+			$tpl_data[$num]['gt_size'] 	= $game_types['disk_size'];
+			
+			if($script_param = TRUE) {
 				
-				$tpl_data[$num]['gt_id'] 	= $game_types['id'];
-				//~ $tpl_data[$num]['gt_code'] 	= $game_types['game_code'];
-				$tpl_data[$num]['gt_name'] 	= $game_types['name'];
-				$tpl_data[$num]['gt_size'] 	= $game_types['disk_size'];
+				$tpl_data[$num]['local_repository']		= $game_types['local_repository'];
+				$tpl_data[$num]['remote_repository']	= $game_types['remote_repository'];
 				
-				if($script_param = TRUE) {
-					
-					$tpl_data[$num]['execfile_linux'] 		= $game_types['execfile_linux'];
-					$tpl_data[$num]['execfile_windows'] 	= $game_types['execfile_windows'];
-					
-					$tpl_data[$num]['local_repository']		= $game_types['local_repository'];
-					$tpl_data[$num]['remote_repository']	= $game_types['remote_repository'];
-					
-					// Заменяем двойные кавычки на html символы
-					$tpl_data[$num]['script_start'] 	= str_replace('"', '&quot;', $game_types['script_start'] );
-					$tpl_data[$num]['script_stop'] 		= str_replace('"', '&quot;', $game_types['script_stop'] );
-					$tpl_data[$num]['script_restart'] 	= str_replace('"', '&quot;', $game_types['script_restart'] );
-					$tpl_data[$num]['script_status'] 	= str_replace('"', '&quot;', $game_types['script_status'] );
-					$tpl_data[$num]['script_update'] 	= str_replace('"', '&quot;', $game_types['script_update'] );
-					$tpl_data[$num]['script_get_console'] 	= str_replace('"', '&quot;', $game_types['script_get_console'] );
-					
-					$tpl_data[$num]['kick_cmd'] 		= str_replace('"', '&quot;', $game_types['kick_cmd'] );
-					$tpl_data[$num]['ban_cmd'] 			= str_replace('"', '&quot;', $game_types['ban_cmd'] );
-					$tpl_data[$num]['chname_cmd'] 		= str_replace('"', '&quot;', $game_types['chname_cmd'] );
-					$tpl_data[$num]['srestart_cmd'] 	= str_replace('"', '&quot;', $game_types['srestart_cmd'] );
-					$tpl_data[$num]['chmap_cmd'] 		= str_replace('"', '&quot;', $game_types['chmap_cmd'] );
-					$tpl_data[$num]['sendmsg_cmd'] 		= str_replace('"', '&quot;', $game_types['sendmsg_cmd'] );
-					$tpl_data[$num]['passwd_cmd'] 		= str_replace('"', '&quot;', $game_types['passwd_cmd'] );
-				}
-				
+				// Заменяем двойные кавычки на html символы
+				$tpl_data[$num]['kick_cmd'] 		= str_replace('"', '&quot;', $game_types['kick_cmd'] );
+				$tpl_data[$num]['ban_cmd'] 			= str_replace('"', '&quot;', $game_types['ban_cmd'] );
+				$tpl_data[$num]['chname_cmd'] 		= str_replace('"', '&quot;', $game_types['chname_cmd'] );
+				$tpl_data[$num]['srestart_cmd'] 	= str_replace('"', '&quot;', $game_types['srestart_cmd'] );
+				$tpl_data[$num]['chmap_cmd'] 		= str_replace('"', '&quot;', $game_types['chmap_cmd'] );
+				$tpl_data[$num]['sendmsg_cmd'] 		= str_replace('"', '&quot;', $game_types['sendmsg_cmd'] );
+				$tpl_data[$num]['passwd_cmd'] 		= str_replace('"', '&quot;', $game_types['passwd_cmd'] );
 			}
 			
-			return $tpl_data;
+			$num++;
 			
-		}else{
-			return FALSE;
 		}
-	}
+		
+		return $tpl_data;
 
+	}
+	
+	// ----------------------------------------------------------------
+    
+    /**
+     * Проверяет, существует ли мод с данным id
+     * Параметру id может быть передан id мода, либо массив where
+     * 
+     * 
+     * @param int|array
+     * @return bool
+    */  
+    function live($id = false) 
+    {
+		if (false == $id) {
+			return false;
+		}
+
+		if (is_array($id)) {
+			$this->db->where($id);
+		} else {
+			$this->db->where(array('id' => $id));
+		}
+		
+		return (bool)($this->db->count_all_results('game_types') > 0);
+    }
 
 }

@@ -23,7 +23,7 @@
 					<th><strong>{lang_action}</strong></th>
 					<th><strong>{lang_command}</strong></th>
 					<th><strong>{lang_user}</strong></th>
-					<th>&nbsp;</td>
+					<th>&nbsp;</th>
 				</tr>
 			{log_list}
 				<tr>
@@ -58,10 +58,13 @@
 	<br />
 	
 <form action="{site_url}adm_servers/edit/game_servers/{server_id}" method="post" accept-charset="utf-8">
-	<input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />	
+	<input type="hidden" name="{csrf_token_name}" value="{csrf_hash}" />	
 
     <ul class="tabs">
         <li><a href="#base_parameters">{lang_base_parameters}</a></li>
+        <?php if (strtolower($this->servers->server_data['os']) != 'windows'): ?>
+			<li><a href="#limites">{lang_limites}</a></li>
+		<?php endif; ?>
         <li><a href="#start_parameters">{lang_adm_servers_start_parameters}</a></li>
     </ul>
 		
@@ -80,18 +83,33 @@
 
 				<tr>
 					<td>{lang_game}:</td>
-					<td>{server_game}</td>
+					<td><a href="{site_url}adm_servers/edit/games/{server_game_code}" target="blank">{server_game}</a></td>
 				</tr>
 
 				<tr>
 					<td>{lang_dedicated_server}:</td>
-					<td>{ds_name}</td>
+					<td>{ds_list_dropdown}</td>
 				</tr>
-
+				
 				<tr>
 					<td>{lang_adm_servers_game_type}:</td>
-					<td>{game_type_dropdown}</td>
+					<td>{game_type_dropdown}&nbsp;<a id="game_type_link" href="#" target="blank">{lang_go} ></a></td>
 				</tr>
+				
+				<script lang="javascript">
+					var gt_id =	$("select[name='game_type']").val();
+
+					$(document).ready(function() {
+						
+						$('#game_type_link').attr('href', '{site_url}adm_servers/edit/game_types/' + gt_id);
+						
+						$("select[name='game_type']").change(function() {
+							gt_id =	$("select[name='game_type']").val();
+							$('#game_type_link').attr('href', '{site_url}adm_servers/edit/game_types/' + gt_id);
+						});
+						
+					});
+				</script>
 
 				<tr>
 					<td>{lang_adm_servers_connect_data}:</td>
@@ -112,10 +130,28 @@
 					<td>{lang_adm_servers_server_dir}:<br /><span class="description">[ {lang_adm_servers_server_dir_desc} ]</span></td>
 					<td>{script_path}/<input type="text" name="dir" value="{server_dir}" /></td>
 				</tr>
+				
+				<script type="text/javascript">
+					function str_rand() {
+						var result       = '';
+						var words        = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+						var max_position = words.length - 1;
+							for( i = 0; i < 10; ++i ) {
+								position = Math.floor ( Math.random() * max_position );
+								result = result + words.substring(position, position + 1);
+							}
+						return result;
+					}
+					
+					function generate_password() {
+						$("input[name='rcon']").val(str_rand());
+						return;
+					}
+				</script>
 
 				<tr>
 					<td>{lang_adm_servers_rcon_password}:<br /><span class="description">[ {lang_leave_blank} ]</span></td>
-					<td><input type="text" name="rcon" /></td>
+					<td><input type="text" name="rcon" />&nbsp;<a class="small awesome" href="#" onclick="generate_password();return false;"><span class="glyphicon glyphicon-refresh"></span>&nbsp;{lang_adm_servers_generate_rcon_password}</a></td>
 				</tr>
 
 				<tr>
@@ -124,6 +160,32 @@
 				</tr>
 				</table>
         </div>
+        
+        <?php if (strtolower($this->servers->server_data['os']) != 'windows'): ?>
+			<div id="limites" class="tab_content">
+				<table class="zebra" width="100%">
+					<tr>
+						<td colspan="2"><p class="hr">{lang_limites}</p></td>
+					</tr>
+					
+					<tr>
+						<td width="25%">{lang_adm_servers_cpu_limit}:</td>
+						<td><input type="text" name="cpu_limit" size="3" value="{cpu_limit}"/>&nbsp;%</td>
+					</tr>
+					
+					<tr>
+						<td>{lang_adm_servers_ram_limit}:</td>
+						<td><input type="text" name="ram_limit" size="3" value="{ram_limit}"/>&nbsp;Mb</td>
+					</tr>
+					
+					<tr>
+						<td>{lang_adm_servers_net_limit}:</td>
+						<td><input type="text" name="net_limit" size="3" value="{net_limit}"/>&nbsp;Kbit/s</td>
+					</tr>
+				
+				</table>
+			</div>
+		<?php endif; ?>
 
         <div id="start_parameters" class="tab_content">
 			<table class="zebra" width="100%">

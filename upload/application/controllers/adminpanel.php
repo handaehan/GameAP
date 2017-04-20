@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://www.gameap.ru/license.html
  * @link		http://www.gameap.ru
  * @filesource
@@ -28,10 +28,12 @@
 */
 class Adminpanel extends CI_Controller {
 	
+	// -----------------------------------------------------------------
+	
 	function __construct()
     {
         parent::__construct();
-		
+
 		$this->load->database();
         $this->load->model('users');
         $this->lang->load('ap');
@@ -43,16 +45,18 @@ class Adminpanel extends CI_Controller {
 			$this->tpl_data['heading'] 	= lang('ap_heading_index');
 			$this->tpl_data['content']	= '';
 			
-			$this->tpl_data['menu'] = $this->parser->parse('menu.html', $this->tpl_data, TRUE);
-			$this->tpl_data['profile'] = $this->parser->parse('profile.html', $this->users->tpl_userdata(), TRUE);
+			$this->tpl_data['menu'] = $this->parser->parse('menu.html', $this->tpl_data, true);
+			$this->tpl_data['profile'] = $this->parser->parse('profile.html', $this->users->tpl_userdata(), true);
         
         } else {
 			redirect('auth');
         }
     }
     
+    // -----------------------------------------------------------------
+    
     // Отображение информационного сообщения
-    function _show_message($message = FALSE, $link = FALSE, $link_text = FALSE)
+    function _show_message($message = false, $link = false, $link_text = false)
     {
         
         if (!$message) {
@@ -67,17 +71,102 @@ class Adminpanel extends CI_Controller {
 			$link_text = lang('back');
 		}
 
-        $local_tpl_data['message'] = $message;
-        $local_tpl_data['link'] = $link;
-        $local_tpl_data['back_link_txt'] = $link_text;
-        $this->tpl_data['content'] = $this->parser->parse('info.html', $local_tpl_data, TRUE);
+        $local_tpl['message'] = $message;
+        $local_tpl['link'] = $link;
+        $local_tpl['back_link_txt'] = $link_text;
+        $this->tpl_data['content'] = $this->parser->parse('info.html', $local_tpl, true);
         $this->parser->parse('main.html', $this->tpl_data);
     }
+    
+    // -----------------------------------------------------------------
+    
+    private function _check_modules_updates()
+    {
+		$tpl_data = array();
+		//~ print_r($this->gameap_modules->modules_data);
+		
+		$i = 0;
+		foreach($this->gameap_modules->modules_data as $module) {
+			
+			$tpl_data[$i] = $module;
+			$tpl_data[$i]['available_version'] 		= '-';
+			$tpl_data[$i]['download_url'] 			= '#';
+			$tpl_data[$i]['available_url'] 			= '#';
+			
+			if (!isset($module['update_info']) OR !$module['update_info']) {
+				$i++;
+				continue;
+			}
+			
+			$version_info = $this->_get_available_version($module['update_info']);
+			
+			if ($version_info) {
+				$tpl_data[$i]['download_url'] 		= $version_info['download_url'];
+				$tpl_data[$i]['available_version'] 	= $version_info['available_version'];
+				$tpl_data[$i]['available_url'] 		= $version_info['available_url'];
+				
+				if (version_compare($module['version'], $version_info['available_version']) == -1) {
+					$tpl_data[$i]['available_version'] = '<strong><font color="green">' . $tpl_data[$i]['available_version'] . '</font></strong>';
+				}
+			}
+			
+			$i++;
+		}
+		
+		return $tpl_data;
+	}
+	
+	// -----------------------------------------------------------------
+	
+	private function _get_available_version($url = false)
+	{
+		if (!$url) {
+			return false;
+		}
+		
+		if (in_array('curl', get_loaded_extensions())) {
+			/* Имеется расширение curl, через него лучше */
+			$ch = curl_init();
+			
+			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+			$file_version = curl_exec($ch);
+			curl_close($ch);
+		} else {
+			$file_version = @file_get_contents($url);
+		}
+		
+		if (!$file_version) {
+			return false;
+		}
+		
+		$version_info = array();
+		
+		$strings = explode("\n", $file_version);
+			
+		$available_version = explode(": ", $strings[0]);
+		@$version_info['available_version'] = $available_version[1];
+		
+		$download_url = explode(": ", $strings[1]);
+		@$version_info['download_url'] = $download_url[1];
+		
+		$available_url = explode(": ", $strings[2]);
+		@$version_info['available_url'] = $available_url[1];
+		
+		return $version_info;
+	}
+	
+	// -----------------------------------------------------------------
 	
 	function index()
 	{
 		$this->parser->parse('main.html', $this->tpl_data);
 	}
+	
+	// -----------------------------------------------------------------
 	
 	function help()
 	{
@@ -93,62 +182,31 @@ class Adminpanel extends CI_Controller {
 		$this->parser->parse('main.html', $this->tpl_data);
 	}
 	
+	// -----------------------------------------------------------------
+	
 	/**
 	 * Страница обновления панели
 	 * 
 	 * @param str - обновление (auto|manial|back), если строка отсутствует, то отображаются сведения о версии
 	*/
-	function update($type = FALSE, $confirm = FALSE)
+	function update($type = false, $confirm = false)
 	{
+		$this->load->library('migration');
+		
 		/* Есть ли у пользователя права */
 		if(!$this->users->auth_data['is_admin']) {
 			redirect('admin');
 		}
 		
-		$this->load->library('migration');
-		
 		$this->tpl_data['title'] = lang('ap_title_update');
 		$this->tpl_data['heading'] = lang('ap_heading_update');
 		
 		/* Получение информации о новой версии */
-		if(in_array('curl', get_loaded_extensions())) {
-			/* Имеется расширение curl, через него лучше */
-			$ch = curl_init();
-			
-			curl_setopt($ch, CURLOPT_URL, 'http://www.gameap.ru/gameap_version.txt');
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-			$file_version = curl_exec($ch);
-			curl_close($ch);
-		} else {
-			$file_version = file_get_contents('http://www.gameap.ru/gameap_version.txt');
-		}
+		$version_info = $this->_get_available_version('http://www.gameap.ru/gameap_version.txt');
 		
-		/*  */
-		if ($file_version) {
-			$strings = explode("\n", $file_version);
-			
-			$available_version = explode(": ", $strings[0]);
-			@$available_version = $available_version[1];
-			
-			$download_url = explode(": ", $strings[1]);
-			@$download_url = $download_url[1];
-			
-			$available_url = explode(": ", $strings[2]);
-			@$available_url = $available_url[1];
-			
-			if (!isset($available_version) OR !isset($download_url)) {
-				/* Не удалось получить версию */
-				$this->_show_message('<p align="center">' . lang('ap_error_check_version') . '</p>');
-				return FALSE;
-			}
-			
-		} else {
-			/* Не удалось получить версию */
+		if (!$version_info OR !isset($version_info['available_version'])) {
 			$this->_show_message('<p align="center">' . lang('ap_error_check_version') . '</p>');
-			return FALSE;
+			return false;
 		}
 
 		switch($type) {
@@ -166,21 +224,20 @@ class Adminpanel extends CI_Controller {
 						show_error($this->migration->error_string());
 					} else {
 						$this->_show_message('Update successful', site_url('adminpanel/update'), lang('next'));
-						return TRUE;
+						return true;
 					}
 					
 				} else {
 					/* Пользователь не подвердил намерения */
-					$confirm_tpl['message'] = 'Загрузите последнюю версию по адресу <a href="'. $download_url . '">' . $download_url . '</a>, распакуйте архив в каталог с панелью и нажмите "Да"';
+					$confirm_tpl['message'] = 'Загрузите последнюю версию по адресу <a href="'. $version_info['download_url'] . '">' . $version_info['download_url'] . '</a>, распакуйте архив в каталог с панелью и нажмите "Да"';
 					$confirm_tpl['confirmed_url'] = site_url('adminpanel/update/manual/' . $this->security->get_csrf_hash());
-					$this->tpl_data['content'] .= $this->parser->parse('confirm.html', $confirm_tpl, TRUE);
+					$this->tpl_data['content'] .= $this->parser->parse('confirm.html', $confirm_tpl, true);
 				}
 				
 				break;
 				
 			case 'back':
 				/* Откат */	
-				
 				
 				/* Если было подтверждение */
 				//~ if ($confirm == $this->security->get_csrf_hash()) {
@@ -193,29 +250,32 @@ class Adminpanel extends CI_Controller {
 					//~ /* Пользователь не подвердил намерения */
 					//~ $confirm_tpl['message'] = 'Откатить к выбранной версии?';
 					//~ $confirm_tpl['confirmed_url'] = site_url('adminpanel/update/manual/' $this->security->get_csrf_hash());
-					//~ $this->tpl_data['content'] .= $this->parser->parse('confirm.html', $confirm_tpl, TRUE);
+					//~ $this->tpl_data['content'] .= $this->parser->parse('confirm.html', $confirm_tpl, true);
 				//~ }
 				
 				break;
 				
 			default:
 
-				$this->tpl_data['content'] = '<p align="center"><strong>' . lang('ap_you_version') . ': </strong>' . AP_VERSION . ' <strong>' . lang('ap_actual_version') . ': </strong>' . $available_version . '</p>';
+				$this->tpl_data['content'] = '<p align="center"><strong>' . lang('ap_you_version') . ': </strong>' . AP_VERSION . ' <strong>' . lang('ap_actual_version') . ': </strong>' . $version_info['available_version'] . '</p>';
 				
-				if(AP_VERSION < $available_version) {
+				if(version_compare(AP_VERSION, $version_info['available_version']) == -1) {
 					$this->tpl_data['content'] .= '<p align="center"><font color="red">' . lang('ap_you_version_old') . '</font></p>';
 					//~ $this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="#">' . lang('ap_autoupdate') . '</a></p>';
-					$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="#">Manual Update</a></p>';
-				} elseif(AP_VERSION == $available_version) {
+					$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . site_url('/adminpanel/update/manual') . '">Manual Update</a></p>';
+				} elseif(version_compare(AP_VERSION, $version_info['available_version']) == 0) {
 					$this->tpl_data['content'] .= '<p align="center"><font color="green">' . lang('ap_you_version_actual') . '</font></p>';
-					//~ $this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . base_url('/adminpanel/update/back') . '">Откат к предыдущей версии</a></p>';
-				} elseif(AP_VERSION > $available_version) {
+					//~ $this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . site_url('/adminpanel/update/back') . '">Откат к предыдущей версии</a></p>';
+				} elseif(version_compare(AP_VERSION, $version_info['available_version']) == 1) {
 					$this->tpl_data['content'] .= '<p align="center"><font color="goldenrod">' . lang('ap_you_version_dev') . '</font></p>';
-					$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . base_url('/adminpanel/update/manual') . '">Manual Update</a></p>';
+					$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . site_url('/adminpanel/update/manual') . '">Manual Update</a></p>';
 				}
 
-				$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . $download_url . '">' . lang('ap_goto_download_page') . '</a></p>';
-
+				$this->tpl_data['content'] .= '<p align="center"><a class="small awesome" href="' . $version_info['download_url'] . '">' . lang('ap_goto_download_page') . '</a></p>';
+				
+				// Проверка модулей
+				$local_tpl['modules_list'] = $this->_check_modules_updates();
+				$this->tpl_data['content'] 		.= $this->parser->parse('adminpanel/update.html', $local_tpl, true);
 				
 				break;
 		}
@@ -223,22 +283,33 @@ class Adminpanel extends CI_Controller {
 		$this->parser->parse('main.html', $this->tpl_data);
 	}
 	
+	// -----------------------------------------------------------------
+	
+	/**
+	 * Отправка сообщения разработчику
+	 */
 	function send_error()
 	{
 		$this->tpl_data['title'] = lang('ap_title_report_error');
 		$this->tpl_data['heading'] = lang('ap_heading_report_error');
 		
-		$local_tpl_data = array();
+		$local_tpl = array();
 		$this->load->library('form_validation');
 		
 		$this->form_validation->set_rules('description', 'описание', 'trim|required|min_length[3]|xss_clean');
 		$this->form_validation->set_rules('actions', 'действия', 'trim|min_length[3]|xss_clean');
 		
-		if ($this->form_validation->run() == FALSE) {
-			$this->tpl_data['content'] = $this->parser->parse('adminpanel/send_error.html', $local_tpl_data, TRUE);
+		if ($this->form_validation->run() == false) {
+			
+			if (validation_errors()) {
+				$this->_show_message(validation_errors());
+				return false;
+			}
+			
+			$this->tpl_data['content'] = $this->parser->parse('adminpanel/send_error.html', $local_tpl, true);
 		} else {
 			$upload_config['upload_path'] = sys_get_temp_dir();
-			$upload_config['overwrite'] = TRUE;
+			$upload_config['overwrite'] = true;
 			$upload_config['max_filename'] = 64;
 			$upload_config['max_size']	= '2048';
 			$upload_config['allowed_types'] = 'gif|jpg|png|zip|rar|7z';
@@ -255,7 +326,7 @@ class Adminpanel extends CI_Controller {
 									"\nЛогин пользователя: " . $this->users->auth_data['login'] .
 									"\nEmail пользователя: " . $this->users->auth_data['email'] .
 									"\nДомен: " . site_url() .
-									"\nОписание ошибки: " . $this->input->post('description', TRUE) . 
+									"\nОписание ошибки: " . $this->input->post('description', true) . 
 									"\nДействия: " . $this->input->post('actions')
 								);
 								
@@ -267,11 +338,11 @@ class Adminpanel extends CI_Controller {
 								
 			if($this->email->send()) {
 				$this->_show_message(lang('ap_error_msg_sended'), site_url('/admin'), lang('next'));
-				return TRUE;
+				return true;
 			} else {
 				$this->_show_message(lang('ap_error_send_mail'));
 				//echo $this->email->print_debugger();
-				return FALSE;
+				return false;
 			}
 
 		}

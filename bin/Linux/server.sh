@@ -10,111 +10,254 @@
 # Данный скрипт используется для управления игровыми серверами через АдминПанель
 #
 # 
-# Параметры запуска
+# Параметры
 #
-# @command - команда (start|stop|restart|status)
-# @dir - директория относительно скрипта
-# @name - имя для screen
-# @serverip - ip сервера
-# @port - порт сервера
-# @start_command - команда для сервера (напр. 'hlds_run -game valve +ip 127.0.0.1 +port 27015 +map crossfire')
-# @user - пользователь, под которым будет запущен игровой сервер (если пусто, то будет использован root)
+# -t <type> 		(start|stop|restart|status|get_console|send_command)
+# -d <dir>			директория относительно скрипта
+# -n <screen_name>	имя screen
+# -i <ip>
+# -p <port>
+# -c <command> 		команда для сервера (напр. 'hlds_run -game valve +ip 127.0.0.1 +port 27015 +map crossfire')
+# -u <user>			имя пользователя
+# -m <memory>		лимит оперативной памяти (Kb)
+# -f <percentage>	лимит на использование процессора
+# -n <max speed>	лимит на использование пропускной способности
+# 
+# Examples:
+# ./server.sh -t start -d /home/hl_server -n screen_hldm -i 127.0.0.1 -p 27015 -c "hlds_run -game valve +ip 127.0.0.1 +port 27015 +map crossfire"
+# ./server.sh -t get_console -n hldm -u usver
 #
-# Example:
-# ./server.sh start /home/hl_server screen_hldm 127.0.0.1 27015 "hlds_run -game valve +ip 127.0.0.1 +port 27015 +map crossfire" user
-#
-#
-#
 
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
+# Версия
+VERSION=100
 
-# Раскомментируйте строчку ниже, если не запускается игровой сервер
-# во многих случаях, особенно для виртуальных серверов, это помогает
-#export CPU_MHZ=2000
-
-# Directory
-DIR=$2
-
-PIDFILE_NAME="server.pid"
-PIDFILE="$DIR/$PIDFILE_NAME"
-
-# Screen Name
-NAME=$3
-
-# IP
-SERVER_IP=$4
-
-# Port
-SERVER_PORT=$5
-
-# Command
-COMMAND=$6
-
-if [[ $7 == '' ]]
-then
-	USER=$(whoami)
-else
-	USER=$7
+# Загрузка конфигурации
+if [[ -s ./server.conf ]]; then
+	# echo -e "Configuration loaded"
+	source ./server.conf
 fi
 
-case "$1" in
- start)
-    if [[ `su $USER -c "screen -ls |grep $NAME"` ]]
-		then
-		echo "Server is already running"
+# Переменные
+USER=$(whoami);
+NAME="";
+
+# ----------------------------------------------------------------------
+# Запуск сервера
+function server_start()
+{
+	if [[ $SNAME == "" ]]; then
+		echo -e "Screen name empty";
+		echo -e "Server not started";
+		return;
+	fi
+	
+	if [[ $COMMAND == "" ]]; then
+		echo -e "Command empty";
+		echo -e "Server not started";
+		return;
+	fi
+	
+	if [[ "$(server_status)" == 1 ]]
+       then
+		echo -e "Server is already running";
     else
-		su $USER -c "cd $DIR; screen -m -d -S $NAME $COMMAND"
-		sleep 4
+		su $USER -c "cd $DIR; ${COMMAND_PARTS[0]} screen -U -m -d -S $SNAME ${COMMAND_PARTS[1]} $COMMAND";
+		PID=$!;
+		sleep 3;
 		
-		if [[ `su $USER -c "screen -ls |grep $NAME"` ]]
+		if [[ `su $USER -c "screen -U -ls | grep -i $SNAME"` ]]
 			then
-			echo "Server started"
+			echo -e "Server started";
+			# echo -e "Start command:\n cd $DIR; ${COMMAND_PARTS[0]} screen -U -m -d -S $SNAME ${COMMAND_PARTS[1]} $COMMAND";
 		else
-		   echo -e "Server not started \nStart command:"
-		   echo su $USER -c "cd $DIR; screen -m -d -S $NAME $COMMAND"
+		   echo -e "Server not started";
+		   echo -e "Start command:\ncd $DIR; ${COMMAND_PARTS[0]} screen -U -m -d -S $SNAME ${COMMAND_PARTS[1]} $COMMAND";
 		fi
     fi
-    ;;
+    
+    cpu_limit;
+}
 
- stop)
-    if [[ `su $USER -c "screen -ls |grep $NAME"` ]]
+# ----------------------------------------------------------------------
+# Остановка сервера
+function server_stop()
+{
+	if [[ $SNAME == "" ]]; then
+		echo -e "Screen name empty";
+		echo -e "Server not started";
+		exit;
+	fi
+	
+	if [[ "$(server_status)" == 1 ]]
        then
-       kill `ps aux | grep -v grep | grep -i $USER | grep -i screen | grep -i $NAME | awk '{print $2}'`
+       kill -TERM `ps aux | grep -v grep | grep -i screen | grep -i $SNAME | awk '{print $2}'`
+       su $USER -c  "screen -U -X -S $SNAME kill"
        echo "Server stopped"
     else
        echo "Coulnd't find a running server"
     fi
-    ;;
+}
 
- restart)
-    if [[ `su $USER -c "screen -ls |grep $NAME"` ]]
-       then
-       kill `ps aux | grep -v grep | grep -i $USER | grep -i screen | grep -i $NAME | awk '{print $2}'`
-       
-       sleep 2
+# ----------------------------------------------------------------------
+# Получение статуса сервера
+function server_status()
+{
+	if [[ $SNAME == '' ]]
+	then
+		echo 0;
+		return;
+	fi
 
-		su $USER -c "cd $DIR; screen -m -d -S $NAME $COMMAND"
-		echo "Server restarted"
+	if [[ `sudo su $USER -c "screen -ls |grep $SNAME"` ]]
+		then
+		echo 1;
     else
-       echo "Coulnd't find a running server"
+		echo 0;
     fi
-    ;;
- status)
-    if [ -e ${PIDFILE} ] && [ $(ps -p $(cat ${PIDFILE})|wc -l) = "2" ] ;
-    	then
-       echo "Server is UP"
-    else
-       echo "Server is Down"
-    fi
-    ;;
- get_console)
-	su $4 -c "screen -S $NAME -X -p 0 hardcopy $DIR/console.txt && chmod 666 $DIR/console.txt"
-	echo "File $DIR/console.txt created"
-	;;
- *)
-    echo "Usage all parameters"
-    exit 1
-    ;;
+}
+
+# ----------------------------------------------------------------------
+# Получение частей команд
+function get_parts()
+{
+	if [[ $RAM_LIMIT > 0 && $allow_ram_limit ]]; then
+		COMMAND_PARTS[0]="ulimit -Hv $RAM_LIMIT ;";
+	fi
+	
+	if [[ $NET_LIMIT > 0 && $allow_net_limit ]]; then
+		COMMAND_PARTS[1]="trickle -d $NET_LIMIT -u $NET_LIMIT";
+	fi
+}
+
+# ----------------------------------------------------------------------
+# Применить ограничение CPU %
+function cpu_limit()
+{
+	if [[ $CPU_LIMIT && $allow_cpu_limit && $PID ]]; then
+		CPU_LIMIT=$(($CPU_LIMIT*$core_count))
+		
+		# PID
+		cpulimit --pid=$PID --limit=$CPU_LIMIT
+		
+		# EXE
+		#cpulimit --exe="$DIR/$PROGRAM" --limit=$CPU_LIMIT
+	fi
+}
+
+# Получение опций
+while getopts 't:d:n:i:p:c:u:m:f:s:' opt ;
+do
+	case $opt in
+		t)
+			TYPE=$OPTARG;
+			;;
+		d) 
+			DIR=$OPTARG;
+			;;
+		n) 
+			SNAME=$OPTARG;
+			;;
+		i) 
+			IP=$OPTARG;
+			;;
+		p) 
+			PORT=$OPTARG;
+			;;
+		c) 
+			COMMAND=$OPTARG;
+			;;
+		u)
+			USER=$OPTARG;
+			;;
+		m)
+			RAM_LIMIT=$OPTARG;
+			;;
+		f)
+			CPU_LIMIT=$OPTARG;
+			;;
+		s)
+			NET_LIMIT=$OPTARG;
+			;;
+		esac
+done
+
+# DEBUG
+# -------------------
+#~ echo -e "Type: $TYPE";
+#~ echo -e "Dir: $DIR";
+#~ echo -e "Screen name: $SNAME";
+#~ echo -e "Ip: $IP";
+#~ echo -e "Port: $PORT";
+#~ echo -e "Command: $OPTARG";
+#~ echo -e "User: $USER";
+#~ echo -e "Memory limit: $RAM_LIMIT Kb";
+#~ echo -e "Cpu limit: $CPU_LIMIT %";
+#~ echo -e "Net limit: $NET_LIMIT Kb/s";
+# -------------------
+
+# Разбиение на программу и агрументы
+IFS=' ' read -a explode <<< "$COMMAND";
+PROGRAM=${explode[0]};
+unset explode[0];
+
+ARGUMENTS="";
+for element in "${explode[@]}"
+do
+    ARGUMENTS=$ARGUMENTS" $element";
+done
+
+unset explode;
+
+case "$TYPE" in
+	start)
+		get_parts;
+		server_start;
+		;;
+
+	stop)
+		server_stop;
+		;;
+		
+	restart)
+		get_parts >> /dev/null
+		server_stop >> /dev/null
+		
+		if [ "$(server_start)" == "Server started" ] ;
+			then
+			echo -e "Server restarted"
+		else
+			echo -e "Server not restarted"
+		fi
+		
+		;;
+		
+	status)
+		if [ "$(server_status)" == 1 ] ;
+			then
+		   echo "Server is UP"
+		else
+		   echo "Server is Down"
+		fi
+		;;
+		
+	get_console)
+		su $USER -c "screen -U -S $SNAME -X -p 0 hardcopy -h $DIR/gap_console.txt && chmod 666 $DIR/gap_console.txt"
+		RESULT=`cat $DIR/gap_console.txt`
+		echo -e "$RESULT"
+		;;
+		
+	send_command)
+		# Screen version 4.00.03jw4 (FAU) 2-May-06
+		#~ su $USER "-c screen -p 0 -S $SNAME -X stuff '$COMMAND'$'\n'"
+ 	
+ 		# Screen version 4.01.00devel (GNU) 2-May-06
+		#~ su $USER "-c screen -p 0 -S $SNAME -X stuff '$COMMAND\n'"
+
+		su $USER "-c screen -U -p 0 -S $SNAME -X stuff '$COMMAND
+		'"
+		
+		;;
+	*)
+		echo "Unknown type"
+		;;
 esac
-
-exit 0

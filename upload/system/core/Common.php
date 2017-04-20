@@ -19,6 +19,9 @@
  * Common Functions
  *
  * Loads the base classes and executes the request.
+ * 
+ * Modify by ET-NiK
+ * Added method is_https from CodeIgniter 3.0
  *
  * @package		CodeIgniter
  * @subpackage	codeigniter
@@ -254,7 +257,8 @@ if ( ! function_exists('get_config'))
 			}
 		}
 
-		return $_config[0] =& $config;
+		$_config[0] =& $config;
+		return $_config[0];
 	}
 }
 
@@ -284,6 +288,36 @@ if ( ! function_exists('config_item'))
 		}
 
 		return $_config_item[$item];
+	}
+}
+
+// ------------------------------------------------------------------------
+
+if ( ! function_exists('is_https'))
+{
+	/**
+	 * Is HTTPS?
+	 *
+	 * Determines if the application is accessed via an encrypted
+	 * (HTTPS) connection.
+	 *
+	 * @return	bool
+	 */
+	function is_https()
+	{
+		if ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+		{
+			return TRUE;
+		}
+		elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+		{
+			return TRUE;
+		}
+		elseif ( ! empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off')
+		{
+			return TRUE;
+		}
+		return FALSE;
 	}
 }
 

@@ -7,91 +7,85 @@
 <p>{lang_adm_servers_ds_documentation}</p>
 
 <form action="{site_url}adm_servers/edit/dedicated_servers/{ds_id}" method="post" accept-charset="utf-8">
-<input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
-<table width="50%" class="zebra">
-<tr>
-	<td>{lang_name}:</td>
-	<td><input type="text" name="name" value="{ds_name}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_operationg_system}:</td>
-	<td><input type="text" name="os" value="{ds_os}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_adm_servers_location}:</td>
-	<td><input type="text" name="location" value="{ds_location}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_adm_servers_provider}:</td>
-	<td><input type="text" name="provider" value="{ds_provider}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_ip}:</td>
-	<td><input type="text" name="ip" value="{ds_ip}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_adm_servers_ram}:</td>
-	<td><input type="text" name="ram" value="{ds_ram}" /></td>
-</tr>
-
-<tr>
-	<td>{lang_adm_servers_cpu}:</td>
-	<td><input type="text" name="cpu" value="{ds_cpu}" /></td>
-</tr>
-
-<tr>
-<tr>
-	<td></td>
-	<td><input class="button" type="submit" name="edit_ds" value="{lang_save}" /></td>
-</tr>
-</table>
-
-</form>
-
-<div style="display: none;">
-    <div class="box-modal" id="popup">
-        <div class="box-modal_close arcticmodal-close">close</div>
-		<table class="zebra" width="100%">
-		<tr>
-			<tbody>
-				<tr>
-					<td colspan="4"><p class="hr">{lang_adm_servers_game_servers_on_this_ds}</p></td>
-				</tr>
-			</tbody>
-			<tr>
-				<td><strong>{lang_adm_servers_game_server_name}</strong></td>
-				<td><strong>{lang_adm_servers_game}</strong></td>
-				<td><strong>{lang_adm_servers_game_server_ip}</strong></td>
-				<td><strong>{lang_commands}</strong></td>
-			</tr>
-			{servers_list}
-			<tr>
-				<td>{server_name}</td>
-				<td>{server_game}</td>
-				<td>{server_ip}:{server_port}</td>
-				<td><a class="small awesome" href="{site_url}adm_servers/edit/game_servers/{server_id}">{lang_control}</a>&nbsp;<a class="red small awesome" href="/adm_servers/delete/game_servers/{server_id}">X</a></td>
-			</tr>
-			{/servers_list}
-
-		</table>
-	</div>
-</div>
-
-<br />
-
-<form action="{site_url}adm_servers/edit/dedicated_servers/{ds_id}" method="post" accept-charset="utf-8">
-	<input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+	<input type="hidden" name="{csrf_token_name}" value="{csrf_hash}" />
 	
+	<table width="50%" class="zebra">
+		<tr>
+			<td>{lang_name}:</td>
+			<td><input type="text" name="name" value="{ds_name}" /></td>
+		</tr>
+
+		<tr>
+			<td>{lang_operationg_system}:</td>
+			<td><input type="text" name="os" value="{ds_os}" /></td>
+		</tr>
+
+		<tr>
+			<td>{lang_adm_servers_location}:</td>
+			<td><input type="text" name="location" value="{ds_location}" /></td>
+		</tr>
+
+		<tr>
+			<td>{lang_adm_servers_provider}:</td>
+			<td><input type="text" name="provider" value="{ds_provider}" /></td>
+		</tr>
+
+		<tr>
+			<td>{lang_ip}:<br /><span class="description">{lang_adm_servers_ip_description}</span></td>
+			<td><input type="text" name="ip" value="{ds_ip}" /></td>
+		</tr>
+		
+		<tr>
+			<td>{lang_adm_servers_disable_ds}:</td>
+			<td>{disabled_checkbox}</td>
+		</tr>
+
+		<tr>
+		<tr>
+			<td></td>
+			<td><input class="button" type="submit" name="edit_ds" value="{lang_save}" /></td>
+		</tr>
+	</table>
+
+	<div style="display: none;">
+		<div class="box-modal" id="popup">
+			<div class="box-modal_close arcticmodal-close">close</div>
+			<a class="awesome" target="_blank" href="{site_url}adm_servers/filter_ds_servers/{ds_id}">{lang_adm_servers_apply_ds_filter}</a>
+			<table class="zebra" width="100%">
+			<tr>
+				<tbody>
+					<tr>
+						<td colspan="4"><p class="hr">{lang_adm_servers_game_servers_on_this_ds}</p></td>
+					</tr>
+				</tbody>
+				<tr>
+					<td><strong>{lang_adm_servers_game_server_name}</strong></td>
+					<td><strong>{lang_adm_servers_game}</strong></td>
+					<td><strong>{lang_adm_servers_game_server_ip}</strong></td>
+					<td><strong>{lang_commands}</strong></td>
+				</tr>
+				{servers_list}
+				<tr>
+					<td>{server_name}</td>
+					<td>{server_game}</td>
+					<td>{server_ip}:{server_port}</td>
+					<td><a class="small awesome" href="{site_url}adm_servers/edit/game_servers/{server_id}">{lang_control}</a>&nbsp;<a class="red small awesome" href="/adm_servers/delete/game_servers/{server_id}">X</a></td>
+				</tr>
+				{/servers_list}
+
+			</table>
+		</div>
+	</div>
+
+	<br />
+
 	<ul class="tabs">
 		<li><a href="#access_data">{lang_adm_servers_ds_access}</a></li>
+		<li><a href="#gdaemon_data">{lang_adm_servers_gdaemon_access}</a></li>
 		<li><a href="#ftp_data">{lang_adm_servers_ftp_data}</a></li>
         <li><a href="#ssh_data">{lang_adm_servers_ssh_data}</a></li>
         <li><a href="#telnet_data">{lang_adm_servers_telnet_data}</a></li>
+        <li><a href="#start_parameters">{lang_adm_servers_start_parameters}</a></li>
     </ul>
     
     <div id="access_data" class="tab_content">
@@ -103,6 +97,11 @@
 			</tbody>
 			
 			<tr>
+				<td>{lang_adm_servers_path_to_executable_file}:</td>
+				<td><input type="text" name="script_path" value="{script_path}" /></td>
+			</tr>
+			
+			<tr>
 				<td>{lang_adm_servers_steamcmd_path}:<br /><span class="description">[ {lang_adm_servers_steamcmd_path_desc} ]</span></td>
 				<td><input type="text" name="steamcmd_path" value="{steamcmd_path}" /></td>
 			</tr>
@@ -111,6 +110,27 @@
 			<td width="40%">{lang_adm_servers_control_protocol}:</td>
 			<td>{control_protocol}</td>
 			</tr>
+		</table>
+	</div>
+	
+	<div id="gdaemon_data" class="tab_content">
+		<table class="zebra" width="100%">
+			<tbody>
+				<tr>
+					<td colspan="2"><p class="hr">{lang_adm_servers_gdaemon_data}</p></td>
+				</tr>
+			</tbody>
+			
+			<tr>
+				<td width="30%">{lang_adm_servers_gdaemon_host}:</td>
+				<td><input type="text" name="gdaemon_host" value="{gdaemon_host}" /></td>
+			</tr>
+
+			<tr>
+				<td>{lang_adm_servers_gdaemon_key}:</td>
+				<td><input type="text" name="gdaemon_key" /></td>
+			</tr>
+
 		</table>
 	</div>
 	
@@ -136,11 +156,6 @@
 			<tr>
 				<td>{lang_password}:</td>
 				<td><input type="text" name="ssh_password" /></td>
-			</tr>
-			
-			<tr>
-				<td>{lang_adm_servers_path_to_executable_file}:</td>
-				<td><input type="text" name="ssh_path" value="{ssh_path}" /></td>
 			</tr>
 			<?php else: ?>
 			<tr>
@@ -173,10 +188,6 @@
 				<td><input type="text" name="telnet_password"  /></td>
 			</tr>
 			
-			<tr>
-				<td>{lang_adm_servers_path_to_executable_file}:</td>
-				<td><input type="text" name="telnet_path" value="{telnet_path}" /></td>
-			</tr>
 		</table>
 	</div>
 
@@ -204,12 +215,50 @@
 				<td><input type="text" name="ftp_password" /></td>
 			</tr>
 
+		</table>
+	</div>
+	
+	<div id="start_parameters" class="tab_content">
+		<table class="zebra" width="100%">
+			<tbody>
+				<tr>
+					<td width="45%"><p class="hr">{lang_adm_servers_start_parameters}</p></td>
+					<td></td>
+				</tr>
+			</tbody>
+			
 			<tr>
-				<td>{lang_adm_servers_path_to_executable_file}:</td>
-				<td><input type="text" name="ftp_path" value="{ftp_path}" /></td>
+				<td>{lang_adm_servers_command_start}:</td>
+				<td><textarea style="height:50px" rows="2" name="script_start">{script_start}</textarea></td>
 			</tr>
 
+			<tr>
+				<td>{lang_adm_servers_command_stop}:</td>
+				<td><textarea style="height:50px" name="script_stop">{script_stop}</textarea></td>
+			</tr>
+
+			<tr>
+				<td>{lang_adm_servers_command_restart}:</td>
+				<td><textarea style="height:50px" name="script_restart">{script_restart}</textarea></td>
+			</tr>
+
+			<tr>
+				<td>{lang_adm_servers_command_status}:</td>
+				<td><textarea style="height:50px" name="script_status">{script_status}</textarea></td>
+			</tr>
+
+			<tr>
+				<td>{lang_adm_servers_command_get_console}:</td>
+				<td><textarea style="height:50px" name="script_get_console">{script_get_console}</textarea></td>
+			</tr>
+			
+			<tr>
+				<td>{lang_adm_servers_send_command}:</td>
+				<td><textarea style="height:50px" name="script_send_command">{script_send_command}</textarea></td>
+			</tr>
+			
 		</table>
+		
 	</div>
 	
 	<input class="button" type="submit" name="edit_access_ds" value="{lang_save}" />

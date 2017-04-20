@@ -3,38 +3,45 @@
 <head>
     <meta charset="utf-8">
     <title>{title}</title>
-    
-    <link rel="stylesheet" type="text/css" href="{base_url}themes/{template}/{style}/css/style.css" />
-    <link rel="stylesheet" type="text/css" href="{base_url}themes/{template}/{style}/css/coda-slider.css" />
-    <script type="text/javascript" src="{base_url}themes/system/js/jquery-1.10.2.min.js"></script>
-    <script src="{base_url}themes/{template}/{style}/js/jquery.arcticmodal-0.3.min.js"></script>
-    <script src="{base_url}themes/{template}/{style}/js/tabs.js"></script>
+
+	<script type="text/javascript" src="{base_url}themes/system/js/jquery-2.1.3.min.js"></script>
+	<script type="text/javascript" src="{base_url}themes/system/js/gameap.js"></script>
+	
+	<script src="{base_url}themes/{template}/{style}/js/jquery.arcticmodal-0.3.min.js"></script>
+	<script src="{base_url}themes/{template}/{style}/js/jquery.noty.packaged.min.js"></script>
+	<script src="{base_url}themes/{template}/{style}/js/jquery.multiple.select.js"></script>
+	
+	<script src="{base_url}themes/{template}/{style}/js/tabs.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="{base_url}themes/{template}/{style}/css/bootstrap.min.css" />
+	
+	<link rel="stylesheet" type="text/css" href="{base_url}themes/{template}/{style}/css/style.css" />
+	<link rel="stylesheet" type="text/css" href="{base_url}themes/{template}/{style}/css/multiple-select.css" />
+
+	<link rel="stylesheet" type="text/css" href="{base_url}themes/system/datetimepicker/jquery.datetimepicker.css" />
+	<script type="text/javascript" src="{base_url}themes/system/datetimepicker/jquery.datetimepicker.js"></script>
 
 </head>
 <body>
-
-<div id="container">
-    <h1>{heading}</h1>
+	
+{profile}
+{menu}
+<div class="container">
     <div id="body">
 		<?php if($this->users->auth_id): ?>
-		{menu}
-<!--
-		<div class="head">test<div class="right"><input value="save" class="button black" type="submit" /></div></div>
--->
-		<div id="content">
-			<?php echo validation_errors(); ?>
-			{content}
-		</div>
+			<div id="content">
+				{content}
+			</div>
 		<?php else: ?>
-		<div id="block">
-			{content}
-		</div>
+			<div id="block">
+				{content}
+			</div>
 		<?php endif; ?>
 
 		<div style="clear: both;"></div>
-    </div>
     <p class="footer">Page rendered in <strong>{elapsed_time}</strong> seconds, Memory usage: <strong>{memory_usage}</strong></p>
+    </div>
 </div>
-<p class="copyright">Game AdminPanel <?=AP_VERSION?> [<?=AP_DATE?>]<br />{lang_developer}: ET-NiK | <a href="http://www.gameap.ru">www.GameAP.ru</a>&nbsp;|&nbsp;<a href="http://hldm.org">HLDM.org</a><br />{lang_thanks}: kissbb, GordonFreeman, Pontiy</p>
+<p class="copyright">Game AdminPanel <?php echo AP_VERSION; ?> [<?php echo AP_DATE; ?>]<br />{lang_developer}: ET-NiK | <a href="http://www.gameap.ru">www.GameAP.ru</a>&nbsp;|&nbsp;<a href="http://hldm.org">HLDM.org</a></p>
 </body>
 </html>

@@ -75,6 +75,7 @@ $lang['thanks'] 						= 'Thanks';
 $lang['recovery'] 						= 'Send';
 $lang['value'] 							= 'Value';
 $lang['value_not_set'] 					= 'Not set';
+$lang['version']						= 'Version';
 $lang['view'] 							= 'View';
 $lang['update'] 						= 'Update';
 $lang['upload'] 						= 'Upload';
@@ -144,3 +145,37 @@ $lang['servers_privileges_log_view']		= 'Allow logs view';
 $lang['menu_servers_logs']						= 'Server logs';
 $lang['menu_panel_logs']						= 'GameAP logs';
 
+/* -- 0.8.8 -- */
+$lang['go']										= 'Go';
+
+/* -- 0.9 -- */
+
+/* Menu */
+$lang['menu_files_config']						= 'Server configuration';
+
+$lang['modules']								= 'Modules';
+
+$lang['set']									= 'Set';
+$lang['no_set']									= 'Not set';
+
+$lang['contents']								= 'Contents';
+$lang['filter']									= 'Filter';
+$lang['reset']									= 'Reset';
+
+/* -- 0.9.3 -- */
+$lang['administration']							= 'Admin';
+
+/* -- 0.9.9 -- */
+$lang['closed']									= 'Closed';
+
+/* -- 1.0 -- */
+$lang['files']									= 'Files';
+$lang['limites']								= 'Quota';
+$lang['default_value']							= 'Default';
+
+$lang['close']									= 'Close';
+$lang['size'] 									= 'Size';
+
+/* -- 1.1 -- */
+$lang['group']									= 'Group';
+$lang['reinstall']								= 'Reinstall';

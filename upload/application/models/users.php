@@ -6,9 +6,9 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
- * @license		http://gameap.ru/license.html
- * @link		http://gameap.ru
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
+ * @license		http://www.gameap.ru/license.html
+ * @link		http://www.gameap.ru
  * @filesource
 */
 class Users extends CI_Model {
@@ -31,49 +31,82 @@ class Users extends CI_Model {
     var $user_privileges 		= array();	// Базовые привилегии
     var $servers_privileges 	= array();	// Привилегии на отдельные серверы
     var $user_data 				= array();	// Данные пользователя
-    
+
+    /* Фильтр списка пользователей */
+    private $_filter_users_list	= array(
+									'login' 			=> false,
+									
+									'register_before' 	=> false,
+									'register_after' 	=> false,
+									
+									'last_visit_before' => false,
+									'last_visit_after' 	=> false,
+								);
+	
+	/* Массив с id пользователей, которые будут получены 
+	 * функцией get_users_list
+	 */
+	private $_where_in 			= array();
+	
     /* Списки и пользователи которые получает авторизованный пользователь */
     var $users_list = array();				// Список пользователей
+    
+    private $_set_privileges	= array();
 
     /* Все базовые привилегии */
     var $all_user_privileges = array(
-			'srv'					=> '{lang_base_privileges_srv}',					// Привилегии на серверы
-			'srv_global' 			=> '{lang_base_privileges_srv_global}',				// Глобальные серверные права
-			'srv_start' 			=> '{lang_base_privileges_srv_start}',				// Запуск серверов
-			'srv_stop' 				=> '{lang_base_privileges_srv_stop}',				// Остановка серверов
-			'srv_restart' 			=> '{lang_base_privileges_srv_restart}',			// Перезапуск серверов
-			
-			'usr'					=> '{lang_base_privileges_usr}',					// Привилегии на пользователей
-			'usr_create' 			=> '{lang_base_privileges_usr_create}',				// Создание пользователей
-			'usr_edit' 				=> '{lang_base_privileges_usr_edit}',				// Редактирование пользователей
-			'usr_edit_privileges' 	=> '{lang_base_privileges_usr_edit_privileges}',	// Редактирование привилегий пользователей
-			'usr_delete' 			=> '{lang_base_privileges_usr_delete}',				// Удаление пользователей
+		'srv'					=> '{lang_base_privileges_srv}',					// Привилегии на серверы
+		'srv_global' 			=> '{lang_base_privileges_srv_global}',				// Глобальные серверные права
+		'srv_start' 			=> '{lang_base_privileges_srv_start}',				// Запуск серверов
+		'srv_stop' 				=> '{lang_base_privileges_srv_stop}',				// Остановка серверов
+		'srv_restart' 			=> '{lang_base_privileges_srv_restart}',			// Перезапуск серверов
+		
+		'usr'					=> '{lang_base_privileges_usr}',					// Привилегии на пользователей
+		'usr_create' 			=> '{lang_base_privileges_usr_create}',				// Создание пользователей
+		'usr_edit' 				=> '{lang_base_privileges_usr_edit}',				// Редактирование пользователей
+		'usr_edit_privileges' 	=> '{lang_base_privileges_usr_edit_privileges}',	// Редактирование привилегий пользователей
+		'usr_delete' 			=> '{lang_base_privileges_usr_delete}',				// Удаление пользователей
 	);
     
     // Все серверные привилегии
     var $all_privileges = array(
-			'VIEW' 					=> '{lang_servers_privileges_view}',				// Отображение сервера в списке
-            'RCON_SEND' 			=> '{lang_servers_privileges_rcon_send}',			// Отправка ркон команд
-            'CHANGE_RCON' 			=> '{lang_servers_privileges_change_rcon}',			// Смена пароля
-            'FAST_RCON' 			=> '{lang_servers_privileges_fast_rcon}',			// Fast rcon
-            'PLAYERS_KICK' 			=> '{lang_servers_privileges_players_kick}',		// Кик игроков
-            'PLAYERS_BAN' 			=> '{lang_servers_privileges_players_ban}',			// Бан игроков
-            'PLAYERS_CH_NAME' 		=> '{lang_servers_privileges_players_chname}',		// Смена имени игрокам
-            'CHANGE_MAP' 			=> '{lang_servers_privileges_change_map}',			// Смена карты
-            'SERVER_START' 			=> '{lang_servers_privileges_start}',				// Старт сервера
-            'SERVER_STOP' 			=> '{lang_servers_privileges_stop}',				// Остановка сервера
-            'SERVER_RESTART' 		=> '{lang_servers_privileges_restart}',				// Перезапуск сервера
-            'SERVER_SOFT_RESTART' 	=> '{lang_servers_privileges_soft_restart}',		// Мягкий перезапуск
-            'SERVER_CHAT_MSG' 		=> '{lang_servers_privileges_chat_msg}',			// Сообщение в чат
-            'SERVER_SET_PASSWORD' 	=> '{lang_servers_privileges_set_password}',		// Задание пароля на сервер
-            'SERVER_UPDATE' 		=> '{lang_servers_privileges_update}',				// Обновление сервера
-            'SERVER_SETTINGS' 		=> '{lang_servers_privileges_settings}',			// Настройки
-            'CONSOLE_VIEW' 			=> '{lang_servers_privileges_console_view}',		// Просмотр консоли
-            'TASK_MANAGE' 			=> '{lang_servers_privileges_task_manage}',			// Управление заданиями
-            'UPLOAD_CONTENTS' 		=> '{lang_servers_privileges_upload_contents}',		// Загрузка контента
-            'CHANGE_CONFIG'			=> '{lang_servers_privileges_change_config}',		// Редактирование конфигов
-            'LOGS_VIEW' 			=> '{lang_servers_privileges_log_view}',			// Просмотр логов
-     );
+		'VIEW' 					=> '{lang_servers_privileges_view}',				// Отображение сервера в списке
+		'RCON_SEND' 			=> '{lang_servers_privileges_rcon_send}',			// Отправка ркон команд
+		'CHANGE_RCON' 			=> '{lang_servers_privileges_change_rcon}',			// Смена пароля
+		'FAST_RCON' 			=> '{lang_servers_privileges_fast_rcon}',			// Fast rcon
+		'PLAYERS_KICK' 			=> '{lang_servers_privileges_players_kick}',		// Кик игроков
+		'PLAYERS_BAN' 			=> '{lang_servers_privileges_players_ban}',			// Бан игроков
+		'PLAYERS_CH_NAME' 		=> '{lang_servers_privileges_players_chname}',		// Смена имени игрокам
+		'CHANGE_MAP' 			=> '{lang_servers_privileges_change_map}',			// Смена карты
+		'SERVER_START' 			=> '{lang_servers_privileges_start}',				// Старт сервера
+		'SERVER_STOP' 			=> '{lang_servers_privileges_stop}',				// Остановка сервера
+		'SERVER_RESTART' 		=> '{lang_servers_privileges_restart}',				// Перезапуск сервера
+		'SERVER_SOFT_RESTART' 	=> '{lang_servers_privileges_soft_restart}',		// Мягкий перезапуск
+		'SERVER_CHAT_MSG' 		=> '{lang_servers_privileges_chat_msg}',			// Сообщение в чат
+		'SERVER_SET_PASSWORD' 	=> '{lang_servers_privileges_set_password}',		// Задание пароля на сервер
+		'SERVER_UPDATE' 		=> '{lang_servers_privileges_update}',				// Обновление сервера
+		'SERVER_SETTINGS' 		=> '{lang_servers_privileges_settings}',			// Настройки
+		'CONSOLE_VIEW' 			=> '{lang_servers_privileges_console_view}',		// Просмотр консоли
+		'TASK_MANAGE' 			=> '{lang_servers_privileges_task_manage}',			// Управление заданиями
+		'UPLOAD_CONTENTS' 		=> '{lang_servers_privileges_upload_contents}',		// Загрузка контента
+		'CHANGE_CONFIG'			=> '{lang_servers_privileges_change_config}',		// Редактирование конфигов
+		'LOGS_VIEW' 			=> '{lang_servers_privileges_log_view}',			// Просмотр логов
+    );
+    
+    // Группы пользователей
+    var $users_groups = array(
+		1 						=> '{lang_users_group_user}',
+		10 						=> '{lang_users_group_content_manager}',
+		
+		50 						=> '{lang_users_group_support1}',
+		51 						=> '{lang_users_group_support2}',
+		52 						=> '{lang_users_group_support3}',
+		
+		90 						=> '{lang_users_group_server_manager}',
+		100 					=> '{lang_users_group_admin}',
+    );
+    
+	// ----------------------------------------------------------------
 
     function __construct()
     {
@@ -81,9 +114,92 @@ class Users extends CI_Model {
         parent::__construct();
         
         $this->load->helper('safety');
+        $this->load->helper('date');
         $this->load->library('encrypt');
     }
-
+    
+    // ----------------------------------------------------------------
+    
+	private function _decode_servers_privileges($privileges_json)
+    {
+		$servers_privileges = json_decode($privileges_json, true);
+		
+		foreach($this->all_privileges as $key => $value) {
+			$servers_privileges[$key] = isset($servers_privileges[$key]) ? $servers_privileges[$key] : 0;
+		}
+		
+		return $servers_privileges;
+	}
+	
+	// ----------------------------------------------------------------
+	
+	private function _decode_base_privileges($privileges_json)
+    {
+		$base_privileges = json_decode($privileges_json, true);
+		
+		foreach($this->all_user_privileges as $key => $value) {
+			/* 
+			 * key в привилегиях меньше 3х знаков
+			 * используется для обозначения категории
+			*/
+			if(strlen($key) > 3) {
+				$base_privileges[$key] = isset($base_privileges[$key]) ? $base_privileges[$key] : 0;
+			}
+		}
+		
+		return $base_privileges;
+	}
+	
+	// ----------------------------------------------------------------
+	
+	private function _get_server_privileges($server_id, $servers_privileges = false) 
+	{
+		if (!$servers_privileges) {
+			$servers_privileges =& $this->servers_privileges;
+		}
+		
+		if (isset($servers_privileges[$server_id])) {
+			return $servers_privileges[$server_id];
+		}
+		
+		foreach ($this->all_privileges as $key => $value) {
+			$servers_privileges[$server_id][$key] = 0;
+		}
+		
+		return $servers_privileges[$server_id];
+	}
+	
+	// ----------------------------------------------------------------
+	
+	/**
+	 * Проверка подсети админа
+	 */
+	private function _check_subnet()
+	{
+		if (is_array($this->config->config['admin_ip'])) {
+			/* В конфигурации задан список белых IP
+			 * Если IP, с которого происходит авторизация нет в белом списке,
+			 * то авторизация неудачна
+			 */
+			if (!in_subnet($this->input->ip_address(), $this->config->config['admin_ip'])) {
+				return false;
+			}
+			
+			
+		} else {
+			$ip_ex = explode(' ', $this->config->config['admin_ip']);
+			
+			/* В конфигурации задан список белых IP
+			 * Если IP, с которого происходит авторизация нет в белом списке,
+			 * то авторизация неудачна
+			 */
+			if (!in_subnet($this->input->ip_address(), $ip_ex)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
 
     // ----------------------------------------------------------------
 
@@ -97,82 +213,121 @@ class Users extends CI_Model {
         $user_id = safesql($this->input->cookie('user_id', true));
         $user_hash = safesql($this->input->cookie('hash', true));
         
+        if ($this->config->item('auth_check_ip')) {
+			$md5_ipua = md5($this->input->ip_address() . $this->input->user_agent());
+		} else {
+			$md5_ipua = md5($this->input->user_agent());
+		}
+        
         if($user_id && $user_hash) {
-            $query = $this->db->get_where('users', array('id' => $user_id, 'hash' => $user_hash), 1);
+            $query = $this->db->get_where('users', array('id' => $user_id, 'hash' => $user_hash . $md5_ipua), 1);
             $this->auth_data = $query->row_array();
         } else {
             return false;
         }
 
-        if ($query->num_rows > 0) {
+        if ($query->num_rows() > 0) {
 			
-			$this->auth_id = $user_id;
-			$this->auth_login = $this->auth_data['login'];
-			$this->auth_data['balance'] = (int)$this->encrypt->decode($this->auth_data['balance']);
-			
-			/* Костыль */
-			$this->user_id = $user_id;
-			$this->user_login = $this->auth_data['login'];
-			/*--------*/
-			
-			/* Получение базовых привилегий */
-            if(!$this->auth_privileges = json_decode($this->auth_data['privileges'], true)) {
-				foreach($this->all_user_privileges as $key => $value) {
-					/* 
-					 * key в привилегиях меньше 3х знаков
-					 * используется для обозначения категории
-					*/
-					if (strlen($key) > 3) {
-						$this->auth_privileges[$key] = 0;
-					}
+			 // Проверка на разрешенные IP
+            if ($this->auth_data['is_admin'] && isset($this->config->config['admin_ip'])) {
+				if (!$this->_check_subnet()) {
+					return false;
 				}
 			}
 			
-			/* Костыль */
-			$this->user_privileges = $this->auth_privileges;
-			/*--------*/
-		
+			$this->auth_id 						= (int) $user_id;
+			$this->auth_login 					= $this->auth_data['login'];
+			$this->auth_data['balance'] 		= (int)$this->encrypt->decode($this->auth_data['balance']);
+			$this->auth_data['modules_data'] 	= (isset($this->auth_data['modules_data'])) ? json_decode($this->auth_data['modules_data'], true) : array();
+			$this->auth_data['notices'] 		= (isset($this->auth_data['notices'])) ? json_decode($this->auth_data['notices'], true) : array();
+			
+			$this->auth_data['privileges'] 			= $this->_decode_base_privileges($this->auth_data['privileges']);
+			//~ $this->auth_data['servers_privileges'] 	= $this->_decode_servers_privileges($this->auth_data['servers_privileges']);
+			
+			// Что-то вроде костыля
+			$this->auth_privileges = $this->auth_data['privileges'];
+			$this->auth_servers_privileges = $this->get_server_privileges();
+			
+			// Обновление данных авторизации
+			$this->update_user(array('last_auth' => now()));
+
             return true;
         } else {
             return false;
         }
     }
     
+    // ----------------------------------------------------------------
+    
+    /**
+     * Подсчет пользователей в базе. Учитываются фильтры
+     */
+    function count_all_users()
+    {
+		!$this->_filter_users_list['login'] OR $this->db->like('login', $this->_filter_users_list['login']);
+		
+		!$this->_filter_users_list['register_before'] 	OR $this->db->where('reg_date <', $this->_filter_users_list['register_before']);
+		!$this->_filter_users_list['register_after'] 	OR $this->db->where('reg_date >', $this->_filter_users_list['register_after']);
+		
+		!$this->_filter_users_list['last_visit_before'] OR $this->db->where('last_auth <', $this->_filter_users_list['last_visit_before']);
+		!$this->_filter_users_list['last_visit_after'] 	OR $this->db->where('last_auth >', $this->_filter_users_list['last_visit_after']);
+		
+		return $this->db->count_all_results('users');
+	}
+    
+    // ----------------------------------------------------------------
+    
     /**
      * Авторизация пользователя
      * Проверка логина и пароля
+     * 
+     * @param string		логин
+     * @param string		пароль (не хеш)
+     * @param string		тип авторизации (по логину или по email)
+     * @return int|bool		возвращает ID пользователя, в случае успеха и false в случае неудачи.
     */
-    function user_auth($user_login = '', $user_password = '')
+    function user_auth($user_login = '', $user_password = '', $type = 'login')
     {
         if(!$user_login OR !$user_password){
             return false;
         }
         
         $user_login = safesql($user_login);
-        $user_password = safesql($user_password);
         
-        $query = $this->db->get_where('users', array('login' => $user_login), 1);
+        switch ($type) {
+			default:
+				$query = $this->db->get_where('users', array('login' => $user_login), 1);
+				break;
+			case 'email':
+				$query = $this->db->get_where('users', array('email' => $user_login), 1);
+				break;
+		}
         
-        if ($query->num_rows > 0) {
+        if ($query->num_rows() > 0) {
             
             $this->user_data = $query->row_array();
-            $user_data = $this->user_data;
+            $user_data = &$this->user_data;
+
+            // Проверка на разрешенные IP
+            if ($user_data['is_admin'] && isset($this->config->config['admin_ip'])) {
+				if (!$this->_check_subnet()) {
+					return false;
+				}
+			}
             
-            $this->load->model('password');
-            $password_md5 = $this->password->encryption($user_password, $this->user_data);
-            
+			// Используется blowfish
+			$password_hash = hash_password($user_password, $this->user_data['password']);
+
         } else {
             return false;
         }
         
         // Проверка пароля
-        if($password_md5 == $this->user_data['password']){
-            
-            $this->auth_id 		= $user_data['id'];
+        if ($password_hash == $this->user_data['password']) {
+            $this->auth_id 		= (int) $user_data['id'];
             $this->auth_login 	= $user_data['login'];
             $this->auth_data 	= $user_data;
             $this->auth_data['balance'] = (int)$this->encrypt->decode($user_data['balance']);
-            
             
             return $this->auth_id;
         } else {
@@ -186,13 +341,14 @@ class Users extends CI_Model {
     /**
      * Получает данные пользователя
      * 
-     * @param int       - id пользователя
-     * @param bool      - записать данные в $this->user_data
-     * @param bool      - если true то данные привиление не будут получены
+     * $this->users->get_user_data(48);
+     * $this->users->get_user_data(array('login' => 'gameap'));
+     * 
+     * @param int|array   id пользователя|массив с условиями
      * @return array
     */
-    function get_user_data($user_id = false, $to_this = false, $no_get_privileges = false){
-        
+    function get_user_data($user_id = false)
+    {
         if(!$user_id){
             return false;
         }
@@ -210,41 +366,17 @@ class Users extends CI_Model {
 			return false;
 		}
 		
-		$user_data['balance'] = (int)$this->encrypt->decode($user_data['balance']);
+		$user_data['balance'] 				= (int)$this->encrypt->decode($user_data['balance']);
+		$user_data['modules_data'] 			= ($user_data['modules_data'] != '') ? json_decode($user_data['modules_data'], true) : array();
+		$user_data['notices'] 				= ($user_data['notices'] != '') ? json_decode($user_data['notices'], true) : array();
+		$user_data['privileges'] 			= $this->_decode_base_privileges($user_data['privileges']);
+		//~ $user_data['filters']				= json_decode($user_data['filters']);
 
-        if(!$no_get_privileges) {
-			
-			if(!$user_privileges = json_decode($user_data['privileges'], true)) {
-				foreach($this->all_user_privileges as $key => $value) {
-					
-					/* 
-					 * key в привилегиях меньше 3х знаков
-					 * используется для обозначения категории
-					*/
-					if(strlen($key) > 3) {
-						$this->user_privileges[$key] = 0;
-					}
-				}
-				
-				$user_privileges = $this->user_privileges;
-			}
-			
-            //$query_users_privileges = $this->db->get_where('users_privileges', array('user_id' => $user_data['id']), 1);
-            //$user_privileges = $query_users_privileges->row_array();
-        } else {
-            $user_privileges = array();
-        }
-        
-        if ($to_this) {
-			/* Сохранять значения в $this->****  */
-            //$this->user_id = $user_data['id'];
-            //$this->user_login = $user_data['login'];
-            
-            $this->user_data = $user_data;
-            $this->user_privileges = $user_privileges;
-        }
-        
-        return array_merge($user_data, $user_privileges);
+		$this->user_data 			= $user_data;
+		$this->user_privileges 		= &$user_data['privileges'];
+		//~ $this->servers_privileges 	= &$user_data['servers_privileges'];
+
+        return $user_data;
     }
 
     // ----------------------------------------------------------------
@@ -257,20 +389,17 @@ class Users extends CI_Model {
     */
     function add_user($user_data)
     {
-        if($this->db->insert('users', $user_data)){
-			return true;
-		}else{
-			return false;
-		}
+        return (bool)$this->db->insert('users', $user_data);
     }
     
-    function delete_user($id)
+    // ----------------------------------------------------------------
+    
+    /**
+     * Удаление пользователя
+    */
+    public function delete_user($id)
     {
-		if($this->db->delete('users', array('id' => $id))){
-			return true;
-		}else{
-			return false;
-		}
+		return (bool)$this->db->delete('users', array('id' => $id));
 	}
     
     // ----------------------------------------------------------------
@@ -282,7 +411,7 @@ class Users extends CI_Model {
      * @param string - id пользователя, либо массив с where
      * @return bool
     */
-    function update_user($user_data, $user_id = false)
+    public function update_user($user_data, $user_id = false)
     {
         if(!$user_id){
             $user_id = $this->auth_id;
@@ -298,16 +427,117 @@ class Users extends CI_Model {
 			 $this->db->where($user_id);
 		}
 
-		$query = $this->db->update('users', $user_data); 
-        
-        
-        if(!$query){
-            return false;
-        }else{
-            return true;
-        }
+        return (bool)$this->db->update('users', $user_data);
     }
     
+    //-----------------------------------------------------------
+    
+    /**
+     * Задать/обновить уведомление пользователю
+     * 
+     * @param string 	уникальное имя уведомления
+     * @param string 	текст уведомления
+     * @param array 	внутренние данные уведомления
+     * @param int		ID пользователя
+     */
+    public function set_notice($name, $text = '', $ntdata = array(), $user_id = 0)
+    {
+		if ($user_id) {
+			$this->get_user_data($user_id);
+			$user_data =& $this->user_data;
+		} else {
+			
+			if (!$this->auth_id) {
+				return false;
+			}
+			
+			$user_data =& $this->auth_data;
+		}
+		
+		$user_data['notices'][$name]['text'] = $text;
+		$user_data['notices'][$name]['data'] = $ntdata;
+		
+		$sql_data['notices'] = json_encode($user_data['notices']);
+		
+		return $this->update_user($sql_data, $user_data['id']);
+	}
+    
+    //-----------------------------------------------------------
+	
+	/**
+     * Обновляет поле с данными для модулей
+     * 
+     * @param id 	 	id сервера
+     * @param array 	новые данные
+     * @param string	имя модуля
+     * @return bool
+     *
+    */
+	public function update_modules_data($user_id, $data, $module_name, $erase = false)
+	{
+		$user_data = $this->get_user_data($user_id);
+		
+		if (!$erase) {
+			$user_data['modules_data'][$module_name] = isset($user_data['modules_data'][$module_name]) && is_array($user_data['modules_data'][$module_name])
+				? array_merge($user_data['modules_data'][$module_name], $data)
+				: $data;
+		}
+		else {
+			$user_data['modules_data'][$module_name] = $data;
+		}
+
+		$modules_data_json = json_encode($user_data['modules_data']);
+		
+		$sql_data['modules_data'] = $modules_data_json;
+		
+		return (bool) $this->update_user($sql_data, $user_id);
+	}
+	
+	//-----------------------------------------------------------
+	
+	/**
+     * Обновляет пользовательские фильтры
+     *
+    */
+	public function update_filter($filter_name, $data, $user_id = false)
+	{
+		if (!$user_id) {
+			$user_data =& $this->auth_data;
+		} else {
+			$this->get_user_data($user_id);
+			$user_data =& $this->user_data;
+		}
+		
+		$filters = json_decode($user_data['filters'], true);
+		$filters[ $filter_name ] = $data;
+		$sql_data['filters'] = json_encode($filters);
+		
+		return (bool) $this->update_user($sql_data, $user_id);
+	}
+	
+	//-----------------------------------------------------------
+	
+	/**
+     * Обновляет пользовательские фильтры
+     *
+    */
+	public function get_filter($filter_name, $user_id = false) 
+	{
+		if (!$user_id) {
+			$user_data =& $this->auth_data;
+		} else {
+			$this->get_user_data($user_id);
+			$user_data =& $this->user_data;
+		}
+		
+		$filters = json_decode($user_data['filters'], true);
+		if (is_array($filters) && array_key_exists($filter_name, $filters)) {
+			return $filters[ $filter_name ];
+		} else {
+			return array();
+		}
+	}
+
     // ----------------------------------------------------------------
 
     /**
@@ -316,22 +546,28 @@ class Users extends CI_Model {
      * 
      * @return array
     */
-    function tpl_userdata($id = false, $user_data = false)
+    function tpl_userdata($user_id = false, $user_data = false)
     {
         $this->load->helper('date');
-        
-        if (!$id) {
+
+        if (!$user_id) {
             $user_data = $this->auth_data;
         } else {
-			if (!$user_data) {
-				$user_data = $this->get_user_data($id, false, true);
+			if (!empty($this->user_data)) {
+				$user_data = $this->user_data;
+			} else {
+				$user_data = $this->get_user_data($user_id);
 			}
         }
         
+        if (!$user_data) {
+			return false;
+		}
+        
+        $tpl_data['id'] 				= $user_data['id'];
         $tpl_data['user_id'] 			= $user_data['id'];
         $tpl_data['user_login'] 		= $user_data['login'];
         $tpl_data['user_name'] 			= $user_data['name'];
-        $tpl_data['user_email'] 		= $user_data['email'];
         $tpl_data['user_email'] 		= $user_data['email'];
         $tpl_data['balance'] 			= $user_data['balance'];
    
@@ -346,34 +582,55 @@ class Users extends CI_Model {
     /**
      * Получение привилегий на отдельные серверы
      * 
+     * @param integer
+     * @param integer
      * @return array
     */
-    function get_server_privileges($server_id = false, $user_id = false, $no_insert_this = false)
+    function get_server_privileges($server_id = false, $user_id = false)
     {
-        
-        if(!$user_id){
+        $user_privileges = array();
+       
+        if (!$user_id) {
             $user_id = $this->auth_id;
+            
+            if ($this->auth_data['is_admin']) {
+				// У админа имеются все привилегии
+				foreach($this->all_privileges as $key => $value) {
+					$user_privileges[$key] = 1;
+				}
+				
+				$this->auth_servers_privileges = $user_privileges;
+				return $user_privileges;
+			}
         }
         
-        if(!is_numeric($user_id)){
+        if (!is_numeric($user_id)) {
             return false;
         }
 
-        if(!$server_id){
+        if (!$server_id) {
             $where = array('user_id' => $user_id);
-        }else{
+        } else {
             $where = array('user_id' => $user_id, 'server_id' => $server_id);
         }
         
-        $query = $this->db->get_where('servers_privileges', $where);
-        $user_privileges = array();
-        foreach ($query->result_array() as $privileges)
-        {
-            if(array_key_exists($privileges['privilege_name'], $this->all_privileges)){
-                $user_privileges[$privileges['privilege_name']] = $privileges['privilege_value'];
-            }
-        }
-
+        if (!$this->db->table_exists('servers_privileges')) {
+			return false;
+		}
+        
+        $query = $this->db->get_where('servers_privileges', $where, 1);
+        $row_array = $query->row_array();
+        
+        if (!empty($row_array)) {
+			$array_privileges = json_decode($row_array['privileges'], true);
+			
+			foreach($array_privileges as $key => $value) {
+				if (array_key_exists($key, $this->all_privileges)) { 
+					$user_privileges[$key] = $value; 
+				}
+			}
+		}
+		
         // Заполнение пустых привилегий
         foreach ($this->all_privileges as $key => $value)
         {
@@ -386,92 +643,110 @@ class Users extends CI_Model {
          * в этом случае записываем еще в $this->servers_privileges
         */
         
-        //print_r($user_privileges);
-        
-        if(!$no_insert_this){
-            $this->servers_privileges = $user_privileges;
-            $this->auth_servers_privileges = $user_privileges;
-        }
-        
+        if ($user_id != $this->auth_id) {
+			$this->servers_privileges 		= $user_privileges;
+		} else {
+			$this->auth_servers_privileges 	= $user_privileges;
+		}
+            
         return $user_privileges;
     }
     
     // ----------------------------------------------------------------
 
     /**
-     * Запись привилегий на отдельные серверы
+     * Задать привилегию для сервера
+     * Для обновления привилегий в базе данных, нужно использовать
+     * метод update_server_privileges
      * 
+     * @param string
+     * @param string
+     * @param integer
+     * @param integer
      * @return string
     */
-    function set_server_privileges($privilege_name, $rule, $server_id, $user_id = false)
+    public function set_server_privileges($privilege_name, $rule, $server_id, $user_id = false)
     {
-        if(!$user_id){
+        if (!$user_id) {
             $user_id = $this->auth_id;
-        }else{
+        } else {
             $user_id  = (int)$user_id;
         }
         
-        $where = array('user_id' => $user_id, 
-                       'server_id' => $server_id,
-                       'privilege_name' => $privilege_name);
-        
-        $query = $this->db->get_where('servers_privileges', $where);
-        
-        $data = array(
-            'user_id' =>            $user_id,
-            'server_id' =>          $server_id,
-            'privilege_name' =>     $privilege_name,
-            'privilege_value' =>    $rule
+        $this->_set_privileges[] = array(
+			'user_id' =>            $user_id,
+			'server_id' =>          $server_id,
+			'privilege_name' =>     $privilege_name,
+			'privilege_value' =>    $rule,
         );
-        
-        $this->db->where('user_id', $user_id);
-        $this->db->where('server_id', $server_id);
-        $this->db->where('privilege_name', $privilege_name);
-            
-        if($query->num_rows > 0){
-           /* Если привилегия уже есть в базе данных, то обновляем */
-           if($this->db->update('servers_privileges', $data)){
-                return true;
-            }else{
-                return false;
-            }
-            
-        }else{
-			/* Привилегии нет в базе данных, создаем новую строку */
-			if($this->db->insert('servers_privileges', $data)){
-                return true;
-            }else{
-                return false;
-            }
+    }
+    
+    // ----------------------------------------------------------------
+    
+    /**
+     * Обновляет данные серверных привилегий в базе данных
+     * 
+     * @param integer
+     * @param integer
+     * @param array
+     * @return bool
+    */
+    public function update_server_privileges($user_id = null, $server_id = null, $privileges = array()) 
+    {
+		if (!empty($privileges)) {
+			$this->_set_privileges = $privileges;
 		}
 
-            
-    }
+		if (!empty($this->_set_privileges)) {
+			
+			$user_id 	? $this->db->where('user_id', $user_id) : null;
+			$server_id 	? $this->db->where('server_id', $server_id) : null;
+			
+			foreach($this->_set_privileges as $array) {
+				$set_privileges[ $array['privilege_name'] ] = $array['privilege_value'];
+			}
+			
+			if ($this->db->count_all_results('servers_privileges') > 0) {
+				$this->db->where(array('user_id' => $user_id, 'server_id' => $server_id));
+				return $this->db->update('servers_privileges', array('privileges' => json_encode($set_privileges)));
+			} else {
+				return $this->db->insert('servers_privileges', array('user_id' => $user_id, 'server_id' => $server_id, 'privileges' => json_encode($set_privileges)));
+			}
+		}
+		
+		return;
+	}
 
     // ----------------------------------------------------------------
     
     /**
      * Получение списка пользователей
      * 
+     * @param int  		лимит списка
+     * @param int 		смещение
+     * @param string	префикс названия ключей в массиве, по умолчанию user_
+     * 
      * @return array
     */
-    function tpl_users_list()
+    public function tpl_users_list($limit = null, $offset = 0, $prefix = 'user_')
     {
         $this->load->helper('date');
         
         if(empty($this->users_list)){
-			$this->get_users_list();
+			$this->get_users_list(false, $limit, $offset);
 		}
-
+		
+		$list = array();
         $num = -1;
         foreach ($this->users_list as $users){
             $num++;
             
             $list[$num] = $users;
-            $list[$num]['user_id'] 			= $users['id'];
-            $list[$num]['user_reg_date'] 	= unix_to_human($users['reg_date'], true, 'eu');
-            $list[$num]['user_last_auth'] 	= unix_to_human($users['last_auth'], true, 'eu');
-            $list[$num]['user_balance'] 	= $users['balance'];
+            $list[$num][$prefix . 'id'] 		= $users['id'];
+            $list[$num][$prefix . 'login'] 		= $users['login'];
+            $list[$num][$prefix . 'reg_date'] 	= unix_to_human($users['reg_date'], true, 'eu');
+            $list[$num][$prefix . 'last_auth'] 	= unix_to_human($users['last_auth'], true, 'eu');
+            $list[$num][$prefix . 'balance'] 	= $users['balance'];
         }
         
         return $list;
@@ -487,7 +762,7 @@ class Users extends CI_Model {
      * @return array
      *
     */
-    function get_users_list($where = false, $limit = false)
+    function get_users_list($where = false, $limit = 9999, $offset = 0, $no_filter = false)
     {
 		/*
 		 * В массиве $where храняться данные для выборки.
@@ -496,25 +771,41 @@ class Users extends CI_Model {
 		 * в этом случае будет выбран пользователь id которого = 1
 		 * 
 		*/
-		if(is_array($where)){
-			$query = $this->db->get_where('users', $where, $limit);
-		}else{
-			
-			$query = $this->db->get('users');
+		if($where) {
+			$this->db->where($where);
 		}
-
+		
+		if (!empty($this->_where_in) && is_array($this->_where_in)) {
+			$this->db->where_in('id', $this->_where_in);
+		}
+		
+		if ($no_filter != true) {
+			!$this->_filter_users_list['login'] OR $this->db->like('login', $this->_filter_users_list['login']);
+			
+			!$this->_filter_users_list['register_before'] 	OR $this->db->where('reg_date <', $this->_filter_users_list['register_before']);
+			!$this->_filter_users_list['register_after'] 	OR $this->db->where('reg_date >', $this->_filter_users_list['register_after']);
+			
+			!$this->_filter_users_list['last_visit_before'] OR $this->db->where('last_auth <', $this->_filter_users_list['last_visit_before']);
+			!$this->_filter_users_list['last_visit_after'] 	OR $this->db->where('last_auth >', $this->_filter_users_list['last_visit_after']);
+		}
+		
+		$query = $this->db->get('users', $limit, $offset);
+		
 		if($query->num_rows > 0){
 			
 			$this->users_list = $query->result_array();
 			
-			/* Расшифровка баланса */
+			/* Конвертирование данных */
 			foreach($this->users_list as &$user) {
-				$user['balance'] = (int)$this->encrypt->decode($user['balance']);
+				$user['balance'] 		= (int)$this->encrypt->decode($user['balance']);
+				$user['modules_data'] 	= !empty($user['modules_data']) ? json_decode($user['modules_data'], true) : array();
+				$user['notices'] 		= !empty($user['notices']) ? json_decode($user['notices'], true) : array();
 			}
 			
 			return $this->users_list;
 			
 		}else{
+			$this->users_list = array();
 			return NULL;
 		}
 	}
@@ -526,7 +817,7 @@ class Users extends CI_Model {
      * 
      * @return bool
     */  
-    function user_live($string, $type='id'){
+    function user_live($string, $type = 'id') {
 		
 		$type = strtolower($type);
         
@@ -547,38 +838,8 @@ class Users extends CI_Model {
 				return false;
 				break;
         }
-
-        if ($this->db->count_all_results('users') > 0) {
-            return true;
-        } else {
-            return false;
-        }
         
-    }
-    
-    // ----------------------------------------------------------------
-    
-    /**
-     * Проверяет привилегию
-     * 
-     * @param int - id пользователя
-     * @param int - id сервера
-     * @param string - имя привилегии
-     * 
-    */  
-    function check_privilege($user_id = false, $server_id = false, $privilege = false){
-        
-        if(!$user_id){
-            $user_id = $this->user_data['id'];
-        }else{
-            $user_id  = (int)$user_id;
-        }
-        
-        if(!$privilege){
-            $query = $this->db->get_where('users', array('login' => $string));
-        }else{
-			
-        }
+        return (bool)($this->db->count_all_results('users') > 0);
     }
     
     // ----------------------------------------------------------------
@@ -588,11 +849,18 @@ class Users extends CI_Model {
      * @return string
      * 
     */  
-    function get_user_hash(){
-        
+    function get_user_hash()
+    {
         $this->load->helper('safety');
-        $hash = md5(generate_code(10) . $_SERVER['REMOTE_ADDR']);
-        $this->update_user(array('hash' => $hash, 'last_auth' => time()));
+        $hash 	= md5(generate_code(10) . $this->input->ip_address());
+        
+        if ($this->config->item('auth_check_ip')) {
+			$md5_ipua = md5($this->input->ip_address() . $this->input->user_agent());
+		} else {
+			$md5_ipua = md5($this->input->user_agent());
+		}
+        
+        $this->update_user(array('hash' => $hash . $md5_ipua, 'last_auth' => time()));
         
         return $hash;
     }
@@ -601,29 +869,124 @@ class Users extends CI_Model {
     
     /**
      * Получаем код для восстановления пароля пользователя
-     * @param - where данные пользователя
+     * @param - id пользователя
      * @return string
      * 
     */  
     function get_user_recovery_code($user_id)
     {
-
-        $this->load->helper('safety');
+		$user_data = $this->get_user_data($user_id, false, true);
+		return $user_data['recovery_code'];
+    }
+    
+    //-----------------------------------------------------------
+	
+	/**
+     * Задает фильтры для получения пользоватей с определенными данными
+    */
+	function set_filter($filter)
+	{
+		if (is_array($filter)) {
+			!isset($filter['login']) OR $this->_filter_users_list['login'] = $filter['login'];
+			
+			!isset($filter['register_before']) OR $this->_filter_users_list['register_before'] = $filter['register_before'];
+			!isset($filter['register_after']) OR $this->_filter_users_list['register_after'] = $filter['register_after'];
+			
+			!isset($filter['last_visit_before']) OR $this->_filter_users_list['last_visit_before'] = $filter['last_visit_before'];
+			!isset($filter['last_visit_after']) OR $this->_filter_users_list['last_visit_after'] = $filter['last_visit_after'];
+		}
+	}
+	
+	/**
+	 * Очистка фильтров списка
+	 */
+	function clear_filter()
+	{
+		$this->_filter_users_list	= array(
+			'login' 			=> false,
+			
+			'register_before' 	=> false,
+			'register_after' 	=> false,
+			
+			'last_visit_before' => false,
+			'last_visit_after' 	=> false,
+		);
+	}
+	
+	// ----------------------------------------------------------------
+	
+	/**
+	 * Задает список пользователей
+	 */
+	function where_in($list = array())
+	{
+		$this->_where_in = $list;
+	}
+	
+    
+    // ----------------------------------------------------------------
+    
+    /**
+     * Задает код для восстановления пароля пользователя
+     * @param - id пользователя
+     * @return string
+     * 
+    */ 
+    function set_user_recovery_code($user_id)
+    {
+		$this->load->helper('safety');
         $code = generate_code(20);
         
         $this->update_user(array('recovery_code' => $code), $user_id);
         
         return $code;
-    }
+	}
+	
+	// ----------------------------------------------------------------
+    
+    /**
+     * Отправка сообщения пользователю на почту
+     * @return string
+    */  
+	function send_mail($subject = '<empty>', $message = '', $user_id = false)
+	{
+		$this->load->library('email');
+		
+		if ($user_id) {
+			if ($user_id != $this->auth_id) {
+				$user_data = $this->get_user_data($user_id, false, true);
+			} else {
+				$user_data =& $this->auth_data;
+			}
+		} else {
+			$user_data =& $this->user_data;
+		}
+		
+		$user_name = $user_data['name'] ? $user_data['name']  : $user_data['login'];
+		$message = str_replace('{user_name}', $user_name, $message);
+		$message = str_replace('{user_balance}', $user_data['balance'], $message);
+		
+		$this->email->to($user_data['email']);
+		$this->email->from($this->config->config['system_email'], $this->config->config['email_sender_name']);
+		$this->email->subject($subject);
+		$this->email->message($message);
+		
+		if ($this->email->send()) {
+			return true;
+		} else {
+			//~ echo $this->email->print_debugger();
+			return false;
+		}
+	}
     
     // ----------------------------------------------------------------
     
     /**
      * Отправка сообщения администратору на почту
      * @return string
-     * 
     */  
-    function admin_msg($subject = 'Без темы', $message) {
+    function admin_msg($subject = '<empty>', $message) 
+    {
 		
 		$admin_list = $this->get_users_list(array('is_admin' => '1'), 1000);
 		
@@ -639,7 +1002,7 @@ class Users extends CI_Model {
 		$this->load->library('email');
 		
 		$this->email->to($email_list);
-		$this->email->from($this->config->config['system_email'], 'AdminPanel');
+		$this->email->from($this->config->config['system_email'], $this->config->config['email_sender_name']);
 		$this->email->subject($subject);
 		$this->email->message($message);
 							

@@ -65,6 +65,7 @@ $lang['adm_servers_ds_contains_game_servers']		= 'You cannot delete dedicated se
 $lang['adm_servers_game_contains_game_servers']		= 'You cannot delete game which used servers servers. Delete servers first.';
 $lang['adm_servers_game_type_contains_game_servers'] = 'You cannot delete game mods which used for servers. Delete servers first.';
 $lang['adm_servers_unknown_page']					= 'Undefined page';
+$lang['adm_servers_telnet_data_unavailable']		= 'Telnet data is incorrect. Check  this data first.';
 $lang['adm_servers_ssh_data_unavailable']			= 'SSH data is incorrect. Check  this data first.';
 $lang['adm_servers_ftp_data_unavailable']			= 'FTP  data is incorrect. Check this data first.';
 $lang['adm_servers_error_server_edit']				= 'Failed to edit server settings';
@@ -198,3 +199,36 @@ $lang['adm_servers_local_repository_gtdesc']		= 'Path to game server mod archive
 $lang['adm_servers_remote_repository']				= 'Remote repositry';
 $lang['adm_servers_remote_repository_gdesc']		= 'Path to game server archive on remote host. Its will be downloaded and extracted into server installation directory. Always specify transfer protocol (http://, https://, ftp:// and etc.).';
 $lang['adm_servers_remote_repository_gtdesc']		= 'Path to game server mod archive on remote host. Its will be downloaded and extracted into server directory after basic files installation completes. Always specify transfer protocol (http://, https://, ftp:// and etc.).';
+
+// 0.8.6
+$lang['adm_servers_ip_description']					= 'You can set several IP addresses. Separate each address with comma.';
+
+// 0.8.8
+$lang['adm_servers_go_to_game']						= 'Proceed';
+
+// 0.9
+$lang['adm_servers_sftp_path_not_found']			= 'Cannot locate server.sh or server.exe via SSH path.';
+$lang['adm_servers_ftp_path_not_found']				= 'Cannot locate server.sh or server.exe via FTP path.';
+$lang['adm_servers_modifications']					= 'Mods';
+$lang['adm_servers_must_be_one']					= 'You can have only one localhost server.';
+$lang['adm_servers_empty_ds_list']					= 'You need to <a href="%s">add</a> a dedicated server first.';
+
+// 0.9.3
+$lang['adm_servers_delete_files']					= 'Delete files.';
+$lang['adm_servers_send_command']					= 'Send command on console';
+
+// 0.9.9
+$lang['adm_servers_generate_rcon_password']			= 'Generate new';
+
+// 1.0
+$lang['adm_servers_cpu_limit']						= 'CPU limit';
+$lang['adm_servers_ram_limit']						= 'RAM limit';
+$lang['adm_servers_net_limit']						= 'Network limit';
+
+$lang['adm_servers_disable_ds']						= 'Disable this dedicated server';
+$lang['adm_servers_unknown_engine']					= 'Unsupported game engine';
+
+$lang['adm_servers_gdaemon_access']					= 'GameAP Daemon';
+$lang['adm_servers_gdaemon_data']					= 'GameAP Daemon details';
+$lang['adm_servers_gdaemon_host']					= 'Host(IP:port)';
+$lang['adm_servers_gdaemon_key']					= 'GDaemon access key';

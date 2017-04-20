@@ -15,18 +15,26 @@
 			<div class="wrapper">
 					<div id="form_wrapper" class="form_wrapper">
 						<form action="{site_url}auth/in/{code}" class="login active" method="post" accept-charset="utf-8">
-							<input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+							<input type="hidden" name="{csrf_token_name}" value="{csrf_hash}" />
 							<h3>{lang_auth_heading}</h3>
 							<?php echo validation_errors(); ?>
 							{content}
 							<div>
-								<label>{lang_login}:</label>
+								<label>{lang_login}/{lang_email}:</label>
 								<input type="text" name="user_login" value=""  />
 							</div>
+							
 							<div>
 								<label>{lang_password}:</label>
 								<input type="password" name="user_password" value=""  />
 							</div>
+							
+							<?php if(isset($this->_ci_cached_vars['captcha']) && $this->_ci_cached_vars['captcha']): ?>
+							<div>
+								<label>Изображение:</label>
+								{captcha}
+							</div>
+							<?php endif; ?>
 
 							<div class="bottom">
 								<input type="submit" value="{lang_in}"></input>
@@ -39,6 +47,6 @@
 					</div>
 			</div>
 			<div style="clear: both;"></div>
-<p class="copyright">Game AdminPanel <?=AP_VERSION?> [<?=AP_DATE?>]<br />{lang_developer}: ET-NiK | <a href="http://www.gameap.ru">www.GameAP.ru</a>&nbsp;|&nbsp;<a href="http://hldm.org">HLDM.org</a><br />{lang_thanks}: kissbb, GordonFreeman, Pontiy</p>
+<p class="copyright">Game AdminPanel <?php echo AP_VERSION; ?> [<?php echo AP_DATE; ?>]<br />{lang_developer}: ET-NiK | <a href="http://www.gameap.ru">www.GameAP.ru</a>&nbsp;|&nbsp;<a href="http://hldm.org">HLDM.org</a></p>
 </body>
 </html>

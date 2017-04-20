@@ -11,7 +11,7 @@ $lang['install_welcome_description'] = '<p> Даний майстер допом
 $lang['install_php_version'] = 'Версія PHP';
 $lang['install_php_version_on_server'] = 'Версія на сервері';
 $lang['install_php_recomended_version'] = 'Рекомендовано версія';
-$lang['install_php_recomended_version_info'] = '5 .1 і вище ';
+$lang['install_php_recomended_version_info'] = '5.2.4 і вище';
 $lang['install_php_ext'] = 'Перевірка розширень PHP';
 $lang['install_module'] = 'Модуль';
 $lang['install_status'] = 'Заголовок';
@@ -57,5 +57,5 @@ $lang['install_db_dbprefix'] = 'Префікс';
 $lang['install_db_error'] = 'Помилка з\'єднання з базою даних. Перевірте зазначені дані';
 $lang['install_database_saved'] = 'Конфігураційний файл бази даних створений';
 
-
+$lang['install_db_pdo']							= 'Драйвер PDO';
 

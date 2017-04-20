@@ -1,8 +1,9 @@
 <?php  if (!defined('BASEPATH')) exit('No direct script access allowed'); ?>
+<a class="awesome" href="{site_url}adm_servers/view/game_servers">« {lang_adm_servers_game_servers}</a>&nbsp;
 <h2>{lang_adm_servers_heading_install_game_server}</h2>
 
 <form action="{site_url}adm_servers/install_game_server" method="post" accept-charset="utf-8">
-	<input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+	<input type="hidden" name="{csrf_token_name}" value="{csrf_hash}" />
 	<table class="zebra" width="75%">
 		<tr>
 			<td width="40%">{lang_name}:</td>
@@ -13,13 +14,16 @@
 			<td>{lang_dedicated_server}:</td>
 			<td>
 				<select name="ds_id">
-					<option value="0" selected="selected">{lang_adm_servers_local_server}</option>
 					{ds_list}
 					<option value="{ds_id}">{ds_name}</option>
 					{/ds_list}
-
 				 </select>
 			</td>
+		</tr>
+		
+		<tr>
+			<td>{lang_ip}:</td>
+			<td><div id="ip_dropdown"></div></td>
 		</tr>
 
 		<tr>
@@ -49,11 +53,16 @@
 			<td>{lang_adm_servers_server_dir}:<br /><span class="description">{lang_adm_servers_server_dir_desc}</span></td>
 			<td><input type="text" name="dir" /></td>
 		</tr>
-
+		
 		<tr>
 			<td colspan="2"><p>{lang_adm_servers_absolute_path_to_server} <strong>"<span id="install_dir"></span>"</strong></p></td>
 		</tr>
-
+		
+		<tr>
+			<td>Выполнить установку сервера: <br /><span class="description">[ Укажите, если директория пуста и требуется установить сервер в указанную директорию.  ]</span></td>
+			<td><input type="checkbox" name="install_server" value="accept" checked="checked" /></td>
+		</tr>
+		
 		<script type="text/javascript">
 		var ds_path;
 			
@@ -77,6 +86,20 @@
 				} 
 			}); 
 		}
+		
+		function GetIP() {
+			jQuery.ajax({ 
+				url:     '{site_url}ajax/adm_servers/get_ip/' + $("select[name='ds_id']").val(),
+				type:     "GET",
+				dataType: "html",
+				success: function(response) {
+					document.getElementById('ip_dropdown').innerHTML = response; 
+				}, 
+				error: function(response) {
+					document.getElementById('ip_dropdown').innerHTML = "Select other location"; 
+				} 
+			});
+		}
 
 		$(document).ready(function() {
 			$("select[name='code']").change(function(){
@@ -95,6 +118,13 @@
 				if($("input[name='server_port']").val()) {
 					AjaxFormRequest('server_port_info', 'server_port_info', '{site_url}ajax/adm_servers/check_port/' + $("input[name='server_port']").val());
 				}
+			});
+			
+			GetIP();
+		
+			$("select[name='ds_id']").change(function() {
+				document.getElementById('ip_dropdown').innerHTML = 'Получение списка IP...';
+				GetIP();
 			});
 			
 		});

@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://gameap.ru/license.html
  * @link		http://gameap.ru
  * @filesource
@@ -24,11 +24,7 @@ class Games extends CI_Model {
     */
     function add_game($data)
     {
-		if($this->db->insert('games', $data)){
-			return TRUE;
-		}else{
-			return FALSE;
-		}
+		return (bool)$this->db->insert('games', $data);
 	}
 	
 	//-----------------------------------------------------------	
@@ -39,11 +35,7 @@ class Games extends CI_Model {
     */
     function delete_game($code)
     {
-		if($this->db->delete('games', array('code' => $code))){
-			return TRUE;
-		}else{
-			return FALSE;
-		}
+		return (bool)$this->db->delete('games', array('code' => $code));
 	}
 	
 	//-----------------------------------------------------------	
@@ -56,33 +48,89 @@ class Games extends CI_Model {
     {
 		$this->db->where('code', $code);
 		
-		if($this->db->update('games', $data)){
-			return TRUE;
-		}else{
-			return FALSE;
-		}
+		return (bool)$this->db->update('games', $data);
 	}
 	
+	// -----------------------------------------------------------
+	
+	function select_fields($fields)
+	{
+		if (is_array($fields)) {
+			$fields = implode(',', $fields);
+		}
+		
+		return $this->db->select($fields);
+	}
+	
+	// -----------------------------------------------------------
+	
+	/**
+	 * Массив с кодами игр, которые нужно получить
+	 */
+	function select_games($games_codes)
+	{
+		if (empty($games_codes)) {
+			return false;
+		}
+		
+		return $this->db->where_in('code', $games_codes);
+	}
+	
+	// -----------------------------------------------------------------
+	
+	/**
+	 * Получение списка активных игр (серверы которых имеются)
+	 * 
+	 * @param array массив со списком игр
+	 */
+	function get_active_games_list($games_array = array())
+	{
+		$this->load->model('servers');
+		$games_array = array();
+	
+		if (empty($games_list)) {
+			$this->servers->select_fields('game');
+			
+			if ($servers_list = $this->servers->get_list(false, 'VIEW', array())) {
+				foreach($servers_list as $server) {
+					if (!in_array($server['game'], $games_array)) {
+						$games_array[] = $server['game'];
+					}
+				}
+			}
+		}
+		
+		//~ $this->games->select_fields('code, start_code, name, engine, engine_version');
+		$this->select_games($games_array);
+		return $this->get_games_list();
+	}
+
 	//-----------------------------------------------------------
+	
 	/**
      * Получение списка игр
-     * 
-     *
     */
-    function get_games_list($where = FALSE, $limit = 10000)
+    function get_games_list($where = FALSE, $limit = 99999, $offset = 0)
     {
-		
 		$this->db->order_by('name', 'asc'); 
 		
-		if(is_array($where)){
-			$query = $this->db->get_where('games', $where, $limit);
-		}else{
-			$query = $this->db->get('games');
+		if (is_array($where)) {
+			$this->db->where($where);
+		} else {
+			$this->db->where('code', $where);
 		}
+		
+		$this->db->limit($limit, $offset);
+		$query = $this->db->get('games');
 
 		if($query->num_rows > 0){
-			
 			$this->games_list = $query->result_array();
+			
+			// Заполнение массива с именами игр
+			foreach($this->games_list as &$game) {
+				$this->name_games[ $game['code'] ] = $game['name'];
+			}
+			
 			return $this->games_list;
 			
 		}else{
@@ -91,13 +139,15 @@ class Games extends CI_Model {
 	}
 	
 	//-----------------------------------------------------------
+	
 	/**
      * Получение данных игр для шаблона
      * (вырезаны ненужные данные - пароли и пр.)
      * 
-     *
+     * @param array
+     * @param int
     */
-	function tpl_data_games($where = FALSE, $limit = FALSE)
+	function tpl_data_games($where = FALSE, $limit = 99999)
     {
 		$num = -1;
 		
@@ -116,11 +166,11 @@ class Games extends CI_Model {
 				$tpl_data[$num]['game_engine'] 			= $games['engine'];
 				$tpl_data[$num]['game_engine_version'] 	= $games['engine_version'];
 				
-				$tpl_data[$num]['app_id']				= $games['app_id'];
-				$tpl_data[$num]['app_set_config']		= $games['app_set_config'];
+				$tpl_data[$num]['app_id']				= (isset($games['app_id'])) ? $games['app_id'] : '';
+				$tpl_data[$num]['app_set_config']		= (isset($games['app_set_config'])) ? $games['app_set_config'] : '';
 				
-				$tpl_data[$num]['local_repository']		= $games['local_repository'];
-				$tpl_data[$num]['remote_repository']	= $games['remote_repository'];
+				$tpl_data[$num]['local_repository']		= (isset($games['local_repository'])) ? $games['local_repository'] : '';
+				$tpl_data[$num]['remote_repository']	= (isset($games['remote_repository'])) ? $games['remote_repository'] : '';
 				
 			}
 			
@@ -132,39 +182,71 @@ class Games extends CI_Model {
 	}
 	
 	//-----------------------------------------------------------
+	
 	/**
      * Получение названия игры по ее коду
      *
     */
-	function game_name_by_code($code){
+	function game_name_by_code($code)
+	{
+		$get_games = false;
 		
 		if(!$this->games_list){
+			$get_games = true;
 			$this->get_games_list();
 		}
 		
-		if(!empty($this->name_games[$code])){
+		if (isset($this->name_games[$code])) {
 			return $this->name_games[$code];
 		}
 		
 		$count_games = count($this->games_list);
 		$i = 0;
 		
-		while($i < $count_games){
-			
-			$this->name_games[$this->games_list[$i]['code']] = $this->games_list[$i]['name'];
-			
-			if($code == $this->games_list[$i]['code']){
-				$return = $this->games_list[$i]['name'];
+		foreach ($this->games_list as &$game) {
+			if ($code == $game['code']) {
+				return $game['name'];
 			}
-			
-			$i++;
 		}
 		
-		if(isset($return)){
-			return $return;
+		if (!$get_games) {
+			return false;
 		}
 		
-		return FALSE;
+		$this->get_games_list();
+		
+		foreach ($this->games_list as &$game) {
+			if ($code == $game['code']) {
+				return $game['name'];
+			}
+		}
+		
+		return false;
+		
 	}
+	
+	// ----------------------------------------------------------------
+    
+    /**
+     * Проверяет, существует ли игра с данным code
+     * Параметру code может быть передан code игры, либо массив where
+     * 
+     * @param string|array
+     * @return bool
+    */  
+    function live($code = false) 
+    {
+		if (false == $code) {
+			return false;
+		}
+
+		if (is_array($code)) {
+			$this->db->where($code);
+		} else {
+			$this->db->where(array('code' => $code));
+		}
+		
+		return (bool)($this->db->count_all_results('games') > 0);
+    }
 	
 }

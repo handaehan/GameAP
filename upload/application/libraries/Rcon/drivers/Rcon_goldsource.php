@@ -15,9 +15,9 @@ class Rcon_goldsource extends CI_Driver {
 
 		if ($this->fp) {
 			$this->getchallengenumber();
-			return TRUE;
+			return true;
 		} else {
-			return FALSE;
+			return false;
 		}
 	}
 	
@@ -28,9 +28,27 @@ class Rcon_goldsource extends CI_Driver {
 	
 	public function command($command)
 	{
-		$return = $this->rconcommand("\xff\xff\xff\xffrcon $this->challenge_number \"$this->password\" $command");
-		// Вырезаем лишние символы
-		$return = $this->cut_symbols($return);
+		$first_command = true;
+		$return = '';
+		$i = 0;
+		
+		while (true) {
+			
+			$rcmd = $first_command 
+						? $this->rconcommand("\xff\xff\xff\xffrcon $this->challenge_number \"$this->password\" $command")
+						: $this->rconcommand("\xff\xff\xff\xffrcon $this->challenge_number \"$this->password\"");
+			
+			
+			$rcmd = $this->cut_symbols($rcmd);
+			
+			$return .= $rcmd;
+			
+			if (strlen($rcmd) < 256) {
+				break;
+			}
+
+			$first_command = false;
+		}
 		
 		return $return;
 	}
@@ -65,8 +83,8 @@ class Rcon_goldsource extends CI_Driver {
 	*/
 	private function cut_symbols($string)
 	{
-		$string = str_replace("\xff\xff\xff\xff", "" , $string);
-		$string = substr($string, 1);
+		//~ $string = str_replace("\xff\xff\xff\xff", "" , $string);
+		$string = substr($string, 5);
 		
 		return $string;
 	}
@@ -121,18 +139,20 @@ class Rcon_goldsource extends CI_Driver {
 			$return = array();
 			
 			// # 7 "seeking chiters" 818 HLTV hltv:0/128 delay:0 1:17:53 178.124.124.119:44892
-			$pattern = '!#([\s]*)(\d*)([\s]*)"(.*?)"(\s*)(\d*)(\s*)([a-zA-Z0-9\_\:]*)(\s*)(hltv\:0\/128 delay\:0|[a-z\-\:0-9]*)(\s*)([0-9\:]*)(\s*)(\s*|\d*)(\s*)(\s*|\d*)(\s*)([0-9\.]*):(\d*)!si';
+			// #21 "bitl" 611 STEAM_0:0:10982749 -1 23:16 77 0 31.23.107.68:27005;
+			// # 2 "-=MaZaHaKa=-" 609 STEAM_0:0:850042824 0 23:18 113 0 92.115.87.48:23083
+			$pattern = '!#\s*\d*\s*\"(.*?)\"\s*(\d*)\s*([a-zA-Z0-9\_\:]*)\s*(hltv\:0\/128 delay\:0|[a-z\-\:0-9]*)\s*([0-9\:]*)\s*(\s*|\d*)\s*(\s*|\d*)\s*([0-9\.]*):(\d*)!si';
 			$matches = get_matches($pattern, $result);
 			
 			$count = count($matches);
 			$a = 0;
 			while ($a < $count) {
 				$return[] = array(
-						'user_name' => $matches[$a]['4'], 
-						'steam_id' => $matches[$a]['8'],
-						'user_id' => $matches[$a]['6'],
-						'user_ip' => $matches[$a]['18'],
-						'user_time' => $matches[$a]['12'],
+						'user_name' => htmlspecialchars($matches[$a]['1']), 
+						'user_id' => $matches[$a]['2'],
+						'steam_id' => $matches[$a]['3'],
+						'user_ip' => $matches[$a]['8'],
+						'user_time' => $matches[$a]['5'],
 					);
 				
 				$a++;
@@ -153,18 +173,58 @@ class Rcon_goldsource extends CI_Driver {
 	 * @return array
 	 *  
 	*/
-	public function get_maps(){
+	public function get_maps()
+	{
 		$maps = array();
-		$maps_ = explode("\n", $this->command("maps *"));
-		foreach($maps_ as $i => $val){
+		
+		$maps_exp1 = explode("\n", $this->command("maps *"));
+		asort($maps_exp1);
+		
+		foreach($maps_exp1 as $i => $val){
 			if($i != 0){
 				$val = trim($val);
 				if(!empty($val)){
-					$maps__ = explode(".", $val);
-					$maps[]['map_name'] = $maps__[0];
+					$maps_exp2 = explode(".", $val);
+					$maps[]['map_name'] = $maps_exp2[0];
 				}
 			}
 		}
+		
 		return $maps;
+	}
+	
+	// ----------------------------------------------------------------
+	
+	/**
+	 * Смена rcon пароля
+	 *  
+	*/
+	function change_rcon($rcon_password = '')
+	{
+		$this->CI->load->helper('ds');
+		$this->CI->load->helper('string');
+		
+		$server_data =& $this->CI->servers->server_data;
+
+		$dir = get_ds_file_path($server_data);
+		
+		$file = $dir. $this->CI->servers->server_data['start_code'] . '/server.cfg'; // Конфиг файл
+		$file_contents = read_ds_file($file, $server_data);
+		
+		/* Ошибка чтения, либо файл не найден */
+		if(!$file_contents) {
+			return false;
+		}
+
+		$file_contents 	= change_value_on_file($file_contents, 'rcon_password', $rcon_password);
+		$write_result 	= write_ds_file($file, $file_contents, $server_data);
+		
+		/* Отправляем новый rcon пароль в консоль сервера*/
+		if($write_result && $this->CI->servers->server_status($this->CI->servers->server_data['server_ip'], $this->CI->servers->server_data['server_port'])) {
+			$rcon_connect = $this->connect();
+			$this->command('rcon_password ' . $rcon_password);
+		}
+		
+		return $write_result;
 	}
 }

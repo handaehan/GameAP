@@ -62,3 +62,22 @@ $lang['server_control_param_for_command'] = 'Параметри для кома�
 $lang['server_control_execution_date'] = 'Дата виконання';
 $lang['server_control_execution_date_desc'] = 'Приклад: 29-06-2013 12:32';
 $lang['server_control_repeat_period'] = 'Період затримки';
+
+// 0.7.2 
+$lang['server_control_command_not_set'] = 'Команда не задане'; 
+
+/* - 0.9 - */ 
+$lang['cvarname_hostname'] = 'Ім\'я сервера'; 
+$lang['cvarname_map'] = 'Поточна карта'; 
+$lang['cvarname_players'] = 'Гравці'; 
+
+/* - 0.9.3 - */ 
+$lang['cvarname_joinlink'] = 'Підключитися до сервера';
+
+/* - 0.9.9 - */ 
+$lang['server_control_twelve_hours'] = '12 годин'; 
+$lang['server_control_time_add_unavailable'] = 'Період повтору введено некоректно'; 
+
+$lang['server_control_empty_rcon_command'] = 'Порожня RCON команда'; 
+$lang['server_control_task_deleted'] = 'Завдання успішно видалено'; 
+$lang['server_control_interval_unavailable'] = 'Проміжок між завданнями повинен бути не менше 10 хвилин';

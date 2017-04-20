@@ -6,7 +6,7 @@
  *
  * @package		Game AdminPanel
  * @author		Nikita Kuznetsov (ET-NiK)
- * @copyright	Copyright (c) 2013, Nikita Kuznetsov (http://hldm.org)
+ * @copyright	Copyright (c) 2014, Nikita Kuznetsov (http://hldm.org)
  * @license		http://www.gameap.ru/license.html
  * @link		http://www.gameap.ru
  * @filesource
@@ -37,11 +37,12 @@ if (!function_exists('module_exists')) {
 	function module_exists($module)
 	{
 		$CI =& get_instance();
+		$CI->gameap_modules->get_modules_list();
 		
 		if (in_array($module, $CI->gameap_modules->modules_list)) {
-			return TRUE;
+			return true;
 		} else {
-			return FALSE;
+			return false;
 		}
 	}
 }

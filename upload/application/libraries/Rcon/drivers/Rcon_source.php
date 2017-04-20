@@ -28,40 +28,49 @@ class Rcon_source extends CI_Driver {
 	
 	function connect() 
 	{
-		$this->fp = fsockopen($this->host, $this->port);
-
+		$this->fp = @fsockopen($this->host, $this->port, $errno, $errstr, 5);
+		
 		if ($this->fp) {
-			$this->_set_timeout($this->fp, 1, 500);
+			stream_set_blocking($this->fp, 0);
+			$this->_set_timeout($this->fp, 5);
 			$this->auth();
-			return TRUE;
+			return true;
 		} else {
-			return FALSE;
+			return false;
 		}
-	
     }
+    
+    function disconnect() 
+	{
+		if ($this->fp) {
+			fclose($this->fp);
+		}
+	}
 
 	function auth() 
 	{
+		if (!$this->fp) {
+			return false;
+		}
 		
 		$packid = $this->_write(SERVERDATA_AUTH, $this->password);
 
 		// Real response (id: -1 = failure)
 		$ret = $this->_packetread();
 		
-		if (FALSE == $ret) {
-			return FALSE;
+		if (false == $ret) {
+			return false;
 		}
 		
 		if (@$ret[1]['ID'] == -1) {
-			return FALSE;
+			return false;
 		} else {
-			return TRUE;
+			return true;
 		}
 	}
 
 	function _set_timeout(&$res, $s, $m = 0) 
 	{
-		
 		if (version_compare(phpversion(),'4.3.0','<')) {
 			return socket_set_timeout($res,$s,$m);
 		}
@@ -71,6 +80,10 @@ class Rcon_source extends CI_Driver {
 
 	function _write($cmd, $s1='', $s2='') 
 	{
+		if (!is_resource($this->fp)) {
+			return 0;
+		}
+		
 		// Get and increment the packet id
 		$id = ++$this->_id;
 
@@ -81,8 +94,8 @@ class Rcon_source extends CI_Driver {
 		$data = pack("V",strlen($data)).$data;
 
 		// Send packet
-		fwrite($this->fp,$data,strlen($data));
-
+		@fwrite($this->fp, $data,strlen($data));
+		sleep(1);
 		// In case we want it later we'll return the packet id
 		return $id;
 	}
@@ -105,7 +118,7 @@ class Rcon_source extends CI_Driver {
 				$packet = "\x00\x00\x00\x00\x00\x00\x00\x00".fread($this->fp, 4096);
 			} else {
 				//Read the packet back
-				$packet = fread($this->fp,$size["Size"]);
+				$packet = @fread($this->fp,$size["Size"]);
 			}
 			array_push($retarray,unpack("V1ID/V1Response/a*S1/a*S2",$packet));
 		}
@@ -148,8 +161,12 @@ class Rcon_source extends CI_Driver {
 		$ret = $this->read();
 
 		//ATM: Source servers don't return the request id, but if they fix this the code below should read as
-		return $ret[$this->_id]['S1'];
-		//return $ret[0]['S1'];
+		if (isset($ret[$this->_id]['S1'])) {
+			return $ret[$this->_id]['S1'];
+		}
+		else {
+			return $ret[0]['S1'];
+		}
 	}
 	
 	// ----------------------------------------------------------------
@@ -170,7 +187,7 @@ class Rcon_source extends CI_Driver {
 			$a = 0;
 			while ($a < $count) {
 				$return[] = array(
-						'user_name' => $matches[$a]['4'], 
+						'user_name' => htmlspecialchars($matches[$a]['4']), 
 						'steam_id' => $matches[$a]['6'],
 						'user_id' => $matches[$a]['2'],
 						'user_ip' => $matches[$a]['16'],
@@ -196,19 +213,59 @@ class Rcon_source extends CI_Driver {
 	 * @return array
 	 *  
 	*/
-	public function get_maps(){
+	public function get_maps()
+	{
 		$maps = array();
-		$maps_ = explode("\n", $this->command("maps *"));
-		foreach($maps_ as $i => $val){
+		
+		$maps_exp1 = explode("\n", $this->command("maps *"));
+		asort($maps_exp1);
+		
+		foreach($maps_exp1 as $i => $val){
 			if($i != 0){
 				$val = trim($val);
 				if(!empty($val)){
-					$maps__ = explode(".", $val);
-					$maps[]['map_name'] = $maps__[0];
+					$maps_exp2 = explode(".", $val);
+					$maps[]['map_name'] = $maps_exp2[0];
 				}
 			}
 		}
+		
 		return $maps;
+	}
+	
+	// ----------------------------------------------------------------
+	
+	/**
+	 * Смена rcon пароля
+	 *  
+	*/
+	function change_rcon($rcon_password = '')
+	{
+		$this->CI->load->helper('ds');
+		$this->CI->load->helper('string');
+		
+		$server_data =& $this->CI->servers->server_data;
+
+		$dir = get_ds_file_path($server_data);
+		
+		$file = $dir. $this->CI->servers->server_data['start_code'] . '/cfg/server.cfg'; // Конфиг файл
+		$file_contents = read_ds_file($file, $server_data);
+		
+		/* Ошибка чтения, либо файл не найден */
+		if(!$file_contents) {
+			return false;
+		}
+		
+		$file_contents 	= change_value_on_file($file_contents, 'rcon_password', $rcon_password);
+		$write_result 	= write_ds_file($file, $file_contents, $server_data);
+		
+		/* Отправляем новый rcon пароль в консоль сервера*/
+		if($write_result && $this->CI->servers->server_status($this->CI->servers->server_data['server_ip'], $this->CI->servers->server_data['server_port'])) {
+			$rcon_connect = $this->connect();
+			$this->command('rcon_password ' . $rcon_password);
+		}
+		
+		return $write_result;
 	}
 	
 }

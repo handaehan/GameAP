@@ -52,7 +52,7 @@ $autoload['packages'] = array();
 |	$autoload['libraries'] = array('database', 'session', 'xmlrpc');
 */
 
-$autoload['libraries'] = array('parser');
+$autoload['libraries'] = array('gameap_hooks', 'parser', 'pagination');
 
 
 /*
@@ -64,7 +64,7 @@ $autoload['libraries'] = array('parser');
 |	$autoload['helper'] = array('url', 'file');
 */
 
-$autoload['helper'] = array('form', 'url', 'language', 'modules', 'patterns');
+$autoload['helper'] = array('cache', 'form', 'url', 'language', 'modules', 'patterns');
 
 
 /*
